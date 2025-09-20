@@ -4,7 +4,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import google.generativeai as genai
 from prompts import BUG_FIX_PROMPT  
-import ollama  # ← Sudah diimport
+import ollama 
 
 # === Load env ===
 load_dotenv()
@@ -14,8 +14,8 @@ GEMINI_KEY = os.getenv("GEMINI_API_KEY")
 if GEMINI_KEY:
     genai.configure(api_key=GEMINI_KEY)
 
-# Local Ollama setup - PERBAIKI INI
-LOCAL_MODEL = os.getenv("LOCAL_MODEL", "codellama")  # ← Ganti ke codellama
+# Local Ollama setup
+LOCAL_MODEL = os.getenv("LOCAL_MODEL", "codellama")
 
 # === Folder setup ===
 BASE_DIR = Path(__file__).resolve().parent
@@ -32,14 +32,13 @@ def ask_llm(prompt: str) -> str:
     # Priority 1: Gemini
     if GEMINI_KEY:
         try:
-            # Gunakan model yang lebih ringan untuk hemat quota
             model = genai.GenerativeModel("models/gemma-3-1b-it")
             resp = model.generate_content(prompt)
             return resp.text
         except Exception as e:
             print(f"[!] Gemini failed ({e}) → fallback ke local model...")
 
-    # Priority 2: Ollama dengan library yang benar
+    # Priority 2: Ollama
     try:
         response = ollama.chat(
             model=LOCAL_MODEL,
@@ -56,7 +55,7 @@ def ask_llm(prompt: str) -> str:
     except Exception as e:
         print(f"[!] Ollama failed ({e}) → fallback ke HTTP API...")
         
-        # Priority 3: Fallback ke HTTP API (format yang benar)
+        # Priority 3: Fallback ke HTTP API
         try:
             payload = {
                 "model": LOCAL_MODEL,
@@ -64,7 +63,6 @@ def ask_llm(prompt: str) -> str:
                 "stream": False
             }
             
-            # Gunakan endpoint yang benar untuk Ollama
             r = requests.post("http://localhost:11434/api/chat", json=payload, timeout=60)
             response_data = r.json()
             
@@ -86,7 +84,7 @@ def run_pipeline():
         print("[!] Report atau snippet tidak ditemukan. Jalankan analyzer dulu.")
         return
 
-    # Cek Ollama status pertama
+    # Check ollama availability
     try:
         models = ollama.list()
         print("✅ Ollama models available:")
