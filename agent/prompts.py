@@ -1,13 +1,18 @@
 BUG_FIX_PROMPT = """
-你是一个资深软件工程助手。以下是代码片段和静态分析报告，请找出 bug 并提供修复补丁。
+You are an expert software engineer assistant.
+Below is a problematic code snippet and its corresponding error analysis from static analysis tools.
 
-代码片段:
+--- CODE SNIPPET ---
 {code_snippet}
 
-分析报告:
+--- ERROR ANALYSIS ---
 {analysis}
 
-请输出：
-1. 修复建议（简短中文说明）
-2. 修复后的代码
+Your task:
+1. **Identify the Bug:** Concisely describe the root cause of the bug within 2 sentences.
+2. **Show the Fix:** Provide a corrected version of the code snippet.
+3. **Explain the Fix:** Briefly explain why your solution resolves the issue within 1 sentence.
+4. Don't change anything outside the snippet.
+
+Ensure the fix is minimal, targeted, and maintains the original code's intent.
 """

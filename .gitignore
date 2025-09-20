@@ -1,0 +1,11 @@
+# Environment
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Reports & snippets
+agent/analysis_report_*.txt
+agent/snippets/
+agent/patches/
