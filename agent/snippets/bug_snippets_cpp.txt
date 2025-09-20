@@ -1,0 +1,246 @@
+--- puzzle-2\bmp\bmp.cpp:1 ---
+#include <cstdio>
+#include <iostream>
+#include <windows.h>
+#include "bmp.h"
+
+Bmp::Bmp()
+
+
+--- puzzle-2\bmp\bmp.cpp:2 ---
+#include <cstdio>
+#include <iostream>
+#include <windows.h>
+#include "bmp.h"
+
+Bmp::Bmp()
+{
+
+
+--- puzzle-2\bmp\bmp.cpp:3 ---
+#include <cstdio>
+#include <iostream>
+#include <windows.h>
+#include "bmp.h"
+
+Bmp::Bmp()
+{
+
+
+
+--- puzzle-2\bmp\bmp.cpp:15 ---
+Bmp::Bmp(BmpFileHeader &newBf, BmpInfoHeader &newBi, std::vector<uint8_t> img)
+{
+    //BmpFileHeader bf(NZwidth, height);
+    //BmpInfoHeader bi(NZwidth, height);
+    bf = newBf;
+    bi = newBi;
+    imgData = img;
+}
+
+void Bmp::setImgData(std::vector<uint8_t> newImgData)
+
+
+--- puzzle-2\bmp\bmp.cpp:16 ---
+{
+    //BmpFileHeader bf(NZwidth, height);
+    //BmpInfoHeader bi(NZwidth, height);
+    bf = newBf;
+    bi = newBi;
+    imgData = img;
+}
+
+void Bmp::setImgData(std::vector<uint8_t> newImgData)
+{
+
+
+--- puzzle-2\bmp\bmp.cpp:17 ---
+    //BmpFileHeader bf(NZwidth, height);
+    //BmpInfoHeader bi(NZwidth, height);
+    bf = newBf;
+    bi = newBi;
+    imgData = img;
+}
+
+void Bmp::setImgData(std::vector<uint8_t> newImgData)
+{
+    imgData.assign(newImgData.begin(), newImgData.end());
+
+
+--- puzzle-2\bmp\bmp.cpp:11 ---
+{
+
+}
+
+Bmp::Bmp(BmpFileHeader &newBf, BmpInfoHeader &newBi, std::vector<uint8_t> img)
+{
+    //BmpFileHeader bf(NZwidth, height);
+    //BmpInfoHeader bi(NZwidth, height);
+    bf = newBf;
+    bi = newBi;
+
+
+--- puzzle-2\bmp\bmp.cpp:11 ---
+{
+
+}
+
+Bmp::Bmp(BmpFileHeader &newBf, BmpInfoHeader &newBi, std::vector<uint8_t> img)
+{
+    //BmpFileHeader bf(NZwidth, height);
+    //BmpInfoHeader bi(NZwidth, height);
+    bf = newBf;
+    bi = newBi;
+
+
+--- puzzle-2\bmp\bmp.cpp:11 ---
+{
+
+}
+
+Bmp::Bmp(BmpFileHeader &newBf, BmpInfoHeader &newBi, std::vector<uint8_t> img)
+{
+    //BmpFileHeader bf(NZwidth, height);
+    //BmpInfoHeader bi(NZwidth, height);
+    bf = newBf;
+    bi = newBi;
+
+
+--- puzzle-2\bmp\bmp.cpp:120 ---
+
+    fclose(pFile);
+}
+
+void Bmp::saveImg(char *path)
+{
+    FILE* pFile;
+    pFile = fopen(path, "wb");
+    if(!pFile)
+    {
+
+
+--- puzzle-2\database.cpp:2 ---
+#include "database.h"
+#include <QtSql/QSqlQuery>
+
+Database::Database()
+{
+    m_db = QSqlDatabase::addDatabase("QSQLITE");
+    m_db.setDatabaseName("puzzle.db"); // 数据库文件
+
+
+--- puzzle-2\database.cpp:6 ---
+#include <QtSql/QSqlQuery>
+
+Database::Database()
+{
+    m_db = QSqlDatabase::addDatabase("QSQLITE");
+    m_db.setDatabaseName("puzzle.db"); // 数据库文件
+}
+
+Database::~Database()
+{
+
+
+--- puzzle-2\defaultpuzzlemenuwindow.cpp:5 ---
+#include "defaultpuzzlemenuwindow.h"
+#include "mainwindowpuzzle.h"
+#include "mainwindow.h" // For background function
+#include "puzzle/databasemanager.h"
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QLabel>
+#include <QFrame>
+#include <QSpacerItem>
+
+
+--- puzzle-2\defaultpuzzlemenuwindow.cpp:6 ---
+#include "mainwindowpuzzle.h"
+#include "mainwindow.h" // For background function
+#include "puzzle/databasemanager.h"
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QLabel>
+#include <QFrame>
+#include <QSpacerItem>
+
+
+
+--- puzzle-2\defaultpuzzlemenuwindow.cpp:7 ---
+#include "mainwindow.h" // For background function
+#include "puzzle/databasemanager.h"
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QLabel>
+#include <QFrame>
+#include <QSpacerItem>
+
+DefaultPuzzleMenuWindow::DefaultPuzzleMenuWindow(DatabaseManager *db)
+
+
+--- puzzle-2\defaultpuzzlemenuwindow.cpp:8 ---
+#include "puzzle/databasemanager.h"
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QLabel>
+#include <QFrame>
+#include <QSpacerItem>
+
+DefaultPuzzleMenuWindow::DefaultPuzzleMenuWindow(DatabaseManager *db)
+    :  dbManager(db)
+
+
+--- puzzle-2\defaultpuzzlemenuwindow.cpp:9 ---
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QLabel>
+#include <QFrame>
+#include <QSpacerItem>
+
+DefaultPuzzleMenuWindow::DefaultPuzzleMenuWindow(DatabaseManager *db)
+    :  dbManager(db)
+{
+
+
+--- puzzle-2\defaultpuzzlemenuwindow.cpp:10 ---
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QLabel>
+#include <QFrame>
+#include <QSpacerItem>
+
+DefaultPuzzleMenuWindow::DefaultPuzzleMenuWindow(DatabaseManager *db)
+    :  dbManager(db)
+{
+    setWindowTitle("Choose Level");
+
+
+--- puzzle-2\generatepuzzlemenuwindow.cpp:6 ---
+#include "mainwindowpuzzle.h"
+#include "mainwindow.h"
+#include "puzzle/databasemanager.h"
+
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QLabel>
+#include <QFileDialog>
+
+
+--- puzzle-2\generatepuzzlemenuwindow.cpp:7 ---
+#include "mainwindow.h"
+#include "puzzle/databasemanager.h"
+
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QLabel>
+#include <QFileDialog>
+#include <QPixmap>
