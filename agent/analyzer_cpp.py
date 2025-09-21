@@ -11,10 +11,14 @@ def run_command(cmd, cwd=None):
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd)
     return result.stdout + result.stderr
 
-def analyze_cpp():
+def analyze_cpp(run_cmd=run_command):
+    """Run cppcheck on the repo and return the raw report string.
+
+    `run_cmd` is injectable for tests and should accept (cmd, cwd) and return stdout/stderr.
+    """
     cpp_repo = BASE_DIR / "cpp_project"
     print("[*] Running C++ analysis (recursive)...")
-    return run_command("cppcheck --enable=all --quiet . 2>&1", cwd=cpp_repo)
+    return run_cmd("cppcheck --enable=all --quiet . 2>&1", cwd=cpp_repo)
 
 def extract_snippets(report_content):
     pattern = r"([^\s:]+\.cpp):(\d+):"
@@ -25,9 +29,11 @@ def extract_snippets(report_content):
     for file_path, line_str in matches[:20]:
         try:
             line_num = int(line_str)
-            source_file = (BASE_DIR / file_path).resolve()
+            # Try relative to BASE_DIR first, else to cpp_project folder
+            source_file = (BASE_DIR / file_path)
             if not source_file.exists():
                 source_file = BASE_DIR / "cpp_project" / file_path
+            source_file = source_file.resolve() if source_file.exists() else source_file
 
             if source_file.exists():
                 lines = source_file.read_text(encoding="utf-8", errors="ignore").splitlines()

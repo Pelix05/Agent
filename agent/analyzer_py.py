@@ -11,10 +11,11 @@ def run_command(cmd, cwd=None):
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd)
     return result.stdout + result.stderr
 
-def analyze_python():
+def analyze_python(run_cmd=run_command):
+    """Run pylint and return the raw report string. `run_cmd` injectable for tests."""
     python_repo = BASE_DIR / "python_repo"
     print("[*] Running Python analysis (recursive)...")
-    return run_command("pylint --disable=R,C --recursive=y .", cwd=python_repo)
+    return run_cmd("pylint --disable=R,C --recursive=y .", cwd=python_repo)
 
 def extract_snippets(report_content):
     pattern = r"([^\s:]+\.py):(\d+):"
@@ -25,9 +26,10 @@ def extract_snippets(report_content):
     for file_path, line_str in matches[:20]:
         try:
             line_num = int(line_str)
-            source_file = (BASE_DIR / file_path).resolve()
+            source_file = (BASE_DIR / file_path)
             if not source_file.exists():
                 source_file = BASE_DIR / "python_repo" / file_path
+            source_file = source_file.resolve() if source_file.exists() else source_file
 
             if source_file.exists():
                 lines = source_file.read_text(encoding="utf-8", errors="ignore").splitlines()

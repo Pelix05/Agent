@@ -1,18 +1,20 @@
 BUG_FIX_PROMPT = """
-You are an expert software engineer assistant.
-Below is a problematic code snippet and its corresponding error analysis from static analysis tools.
+Role: You are an expert programmer.
 
---- CODE SNIPPET ---
+Problem: {bug_report}
+
+Code:
 {code_snippet}
 
---- ERROR ANALYSIS ---
-{analysis}
+Task: Provide a patch in unified diff format (diff -u) that fixes this bug.
+Before the patch, include a short explanation (2-3 sentences) describing the root cause and why the change fixes it.
 
-Your task:
-1. **Identify the Bug:** Concisely describe the root cause of the bug within 2 sentences.
-2. **Show the Fix:** Provide a corrected version of the code snippet.
-3. **Explain the Fix:** Briefly explain why your solution resolves the issue within 1 sentence.
-4. Don't change anything outside the snippet.
+Requirements:
+- Output must be a valid unified diff that can be applied with `git apply`.
+- The diff must include leading header lines starting with `diff --git a/<path> b/<path>`.
+- Use `+++` and `---` file markers and context lines.
+- Only modify files that are mentioned in the `analysis_report` or `bug_snippets` input.
+- Keep changes minimal and preserve original code style.
 
-Ensure the fix is minimal, targeted, and maintains the original code's intent.
+If you cannot produce a valid unified diff, reply with the single line: ERROR: CANNOT_GENERATE_PATCH
 """
