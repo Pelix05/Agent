@@ -2,35 +2,43 @@ import subprocess
 import re
 from pathlib import Path
 
+# Base directory of your project
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Output files
 REPORT_FILE = Path(__file__).resolve().parent / "analysis_report_cpp.txt"
 SNIPPET_FILE = Path(__file__).resolve().parent / "snippets" / "bug_snippets_cpp.txt"
 SNIPPET_FILE.parent.mkdir(exist_ok=True)
 
+# Full path to cppcheck executable
+CPP_CHECK_EXE = r"C:\Program Files\Cppcheck\cppcheck.exe"
+
 def run_command(cmd, cwd=None):
+    """Run a shell command and return combined stdout and stderr."""
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd)
     return result.stdout + result.stderr
 
 def analyze_cpp(run_cmd=run_command):
-    """Run cppcheck on the repo and return the raw report string.
-
-    `run_cmd` is injectable for tests and should accept (cmd, cwd) and return stdout/stderr.
-    """
+    """Run cppcheck on the repo and return the raw report string."""
     cpp_repo = BASE_DIR / "cpp_project"
     print("[*] Running C++ analysis (recursive)...")
-    return run_cmd("cppcheck --enable=all --quiet . 2>&1", cwd=cpp_repo)
+    # Use full path to cppcheck
+    cmd = f'"{CPP_CHECK_EXE}" --enable=all --quiet . 2>&1'
+    return run_cmd(cmd, cwd=cpp_repo)
 
 def extract_snippets(report_content):
+    """Extract code snippets around the reported issues."""
+    # Regex to find <file>.cpp:<line>:
     pattern = r"([^\s:]+\.cpp):(\d+):"
     matches = re.findall(pattern, report_content)
     print(f"[*] Found {len(matches)} C++ issues")
 
     snippets = []
-    for file_path, line_str in matches[:20]:
+    for file_path, line_str in matches[:20]:  # Limit to first 20 issues
         try:
             line_num = int(line_str)
-            # Try relative to BASE_DIR first, else to cpp_project folder
-            source_file = (BASE_DIR / file_path)
+            # Try relative to BASE_DIR first, then cpp_project folder
+            source_file = BASE_DIR / file_path
             if not source_file.exists():
                 source_file = BASE_DIR / "cpp_project" / file_path
             source_file = source_file.resolve() if source_file.exists() else source_file
