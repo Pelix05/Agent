@@ -7,14 +7,33 @@ REPORT_FILE = Path(__file__).resolve().parent / "analysis_report_py.txt"
 SNIPPET_FILE = Path(__file__).resolve().parent / "snippets" / "bug_snippets_py.txt"
 SNIPPET_FILE.parent.mkdir(exist_ok=True)
 
+
 def run_command(cmd, cwd=None):
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd)
     return result.stdout + result.stderr
 
+
 def analyze_python():
     python_repo = BASE_DIR / "python_repo"
-    print("[*] Running Python analysis (recursive)...")
-    return run_command("pylint --disable=R,C --recursive=y .", cwd=python_repo)
+    print("[*] Running Python analysis (pylint + flake8 + bandit)...")
+
+    # pylint: only errors and fatal (disable refactor, convention, warning)
+    output1 = run_command(
+        "pylint --disable=R,C,W --enable=E,F --score=n --exit-zero --recursive=y .",
+        cwd=python_repo,
+    )
+
+    # flake8: focus on syntax error, undefined name, unused import
+    output2 = run_command(
+        "flake8 --select=E9,F63,F7,F82 --show-source --statistics .",
+        cwd=python_repo,
+    )
+
+    # bandit: security issue
+    output3 = run_command("bandit -r .", cwd=python_repo)
+
+    return output1 + "\n" + output2 + "\n" + output3
+
 
 def extract_snippets(report_content):
     pattern = r"([^\s:]+\.py):(\d+):"
@@ -42,6 +61,7 @@ def extract_snippets(report_content):
     if snippets:
         SNIPPET_FILE.write_text("\n\n".join(snippets), encoding="utf-8")
         print(f"[+] Python snippets saved to {SNIPPET_FILE}")
+
 
 if __name__ == "__main__":
     report = analyze_python()

@@ -7,14 +7,30 @@ REPORT_FILE = Path(__file__).resolve().parent / "analysis_report_cpp.txt"
 SNIPPET_FILE = Path(__file__).resolve().parent / "snippets" / "bug_snippets_cpp.txt"
 SNIPPET_FILE.parent.mkdir(exist_ok=True)
 
+
 def run_command(cmd, cwd=None):
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd)
     return result.stdout + result.stderr
 
+
 def analyze_cpp():
     cpp_repo = BASE_DIR / "cpp_project"
-    print("[*] Running C++ analysis (recursive)...")
-    return run_command("cppcheck --enable=all --quiet . 2>&1", cwd=cpp_repo)
+    print("[*] Running C++ analysis (cppcheck + optional clang-tidy)...")
+
+    # cppcheck focus on warnings, performance, portability
+    output1 = run_command(
+        "cppcheck --enable=warning,performance,portability --inconclusive --quiet --force . 2>&1",
+        cwd=cpp_repo,
+    )
+
+    # clang-tidy (optional, if compile_commands.json exists)
+    tidy_file = cpp_repo / "compile_commands.json"
+    output2 = ""
+    if tidy_file.exists():
+        output2 = run_command("clang-tidy **/*.cpp -- -std=c++17", cwd=cpp_repo)
+
+    return output1 + "\n" + output2
+
 
 def extract_snippets(report_content):
     pattern = r"([^\s:]+\.cpp):(\d+):"
@@ -42,6 +58,7 @@ def extract_snippets(report_content):
     if snippets:
         SNIPPET_FILE.write_text("\n\n".join(snippets), encoding="utf-8")
         print(f"[+] C++ snippets saved to {SNIPPET_FILE}")
+
 
 if __name__ == "__main__":
     report = analyze_cpp()
