@@ -1,20 +1,16 @@
 
 BUG_FIX_PROMPT = """
-You are an expert software engineer.
+Role: You are an expert programmer.
+Problem: {analysis}
+Code: {code_snippet}
+Task: Provide a patch in unified diff format (diff -u) that fixes this bug.
 
-Your task: Generate a valid unified diff patch (`diff -u`) to fix the bug in the following code snippet using the analysis report.
+Output rules:
+- First, provide a 2-3 sentence explanation of the fix (plain text), then a blank line, then the unified diff.
+- The diff must start with: diff --git a/<path> b/<path>
+- The diff must include '--- ' and '+++ ' file headers and context lines, and be applyable with git apply.
+- Do not include any additional commentary after the diff.
+- If you cannot produce a valid diff, output exactly an empty string.
 
-Analysis report:
-{analysis}
-
-Buggy code snippet:
-{code_snippet}
-
-Instructions:
-- Output ONLY a unified diff patch start with: `diff --git a/filename b/filename`.
-- Generate ONLY a valid patch in unified diff format (starting with "diff --u").
-- Do not add explanations, plain text, markdown or comments.
-- If you cannot generate a patch, output exactly an empty string ("").
-- Do NOT output anything outside the diff.
-
+Objective: Make the output consistent and directly applicable with git apply.
 """

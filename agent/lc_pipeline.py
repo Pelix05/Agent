@@ -7,6 +7,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 from langchain_ollama import ChatOllama
 from prompts import BUG_FIX_PROMPT
+from patch_parser import validate_patch, PatchValidationError
 
 # === Load env ===
 load_dotenv()
@@ -104,14 +105,40 @@ def run_patch_pipeline(report_file, snippet_file):
                 analysis=report
             )
             patch = ask_llm(prompt)
+            # Normalize response
+            resp_text = patch or ""
 
-            if "diff --git" in patch:
-                f.write(f"\n\n=== PATCH {i} ===\n")
-                f.write(patch.strip())
-                f.write("\n" + "="*50 + "\n")
-                print(f"[+] Patch {i} appended to {PATCH_FILE}")
+            # Try to find the first diff in the response
+            if "diff --git" in resp_text:
+                idx = resp_text.find("diff --git")
+                explanation = resp_text[:idx].strip()
+                diff_part = resp_text[idx:]
+
+                try:
+                    validate_patch(diff_part, allowed_files=None)
+                    # Write explanation (if present) and the validated diff
+                    f.write(f"\n\n=== PATCH {i} ===\n")
+                    if explanation:
+                        f.write(explanation + "\n\n")
+                    f.write(diff_part.strip())
+                    f.write("\n" + "="*50 + "\n")
+                    print(f"[+] Patch {i} appended to {PATCH_FILE}")
+                except PatchValidationError as e:
+                    f.write(f"\n\n=== PATCH {i} ===\n")
+                    f.write("Error: Patch validation failed: " + str(e) + "\n")
+                    f.write("="*50 + "\n")
+                    print(f"[!] Patch {i} validation failed: {e}")
             else:
-                print(f"[!] Skipping snippet {i}, invalid diff format")
+                # Unexpected format: record error and include snippet of the response for debugging
+                f.write(f"\n\n=== PATCH {i} ===\n")
+                f.write("Error: Unexpected response format\n")
+                f.write("-"*40 + "\n")
+                # include a short excerpt of the response to help debugging
+                excerpt = resp_text.strip()[:1000]
+                if excerpt:
+                    f.write(excerpt + "\n")
+                f.write("="*50 + "\n")
+                print(f"[!] Skipping snippet {i}, unexpected LLM response format")
 
 
 def run_dynamic_test():

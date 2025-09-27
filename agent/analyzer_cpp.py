@@ -1,5 +1,6 @@
 import subprocess
 import re
+import shutil
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -17,9 +18,27 @@ def analyze_cpp():
     cpp_repo = BASE_DIR / "cpp_project"
     print("[*] Running C++ analysis (cppcheck + optional clang-tidy)...")
 
+    # Check for cppcheck availability early and provide a helpful message
+    cppcheck_cmd = shutil.which("cppcheck")
+    # On Windows, user might have cppcheck installed under Program Files but not on PATH
+    if cppcheck_cmd is None:
+        possible_paths = [
+            Path("C:/Program Files/Cppcheck/cppcheck.exe"),
+            Path("C:/Program Files (x86)/Cppcheck/cppcheck.exe"),
+        ]
+        for p in possible_paths:
+            if p.exists():
+                cppcheck_cmd = str(p)
+                break
+
+    if cppcheck_cmd is None:
+        msg = "[!] 'cppcheck' not found in PATH or common install locations. Install cppcheck or add it to PATH."
+        print(msg)
+        return msg
+
     # cppcheck focus on warnings, performance, portability
     output1 = run_command(
-        "cppcheck --enable=warning,performance,portability --inconclusive --quiet --force . 2>&1",
+        f'"{cppcheck_cmd}" --enable=warning,performance,portability --inconclusive --quiet --force . 2>&1',
         cwd=cpp_repo,
     )
 

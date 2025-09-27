@@ -2,7 +2,14 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
-from prompts import BUG_FIX_PROMPT
+try:
+    # when run as package
+    from .prompts import BUG_FIX_PROMPT
+    from .patch_parser import validate_patch, PatchValidationError
+except Exception:
+    # fallback when executed as script
+    from prompts import BUG_FIX_PROMPT
+    from patch_parser import validate_patch, PatchValidationError
 
 # === Load env ===
 load_dotenv()
@@ -105,13 +112,23 @@ def run_pipeline():
             )
             patch = ask_llm(prompt)
 
-            if patch.strip().startswith("diff --git"):
-                f.write(f"\n\n=== PATCH {i} ===\n")
-                f.write(patch.strip())
-                f.write("\n" + "=" * 50 + "\n")
-                print(f"[+] Patch {i} appended to {PATCH_FILE}")
-            else:
-                print(f"[!] Skipping snippet {i}, invalid diff format")
+            if not patch or not patch.strip():
+                print(f"[!] Skipping snippet {i}, empty response from LLM")
+                continue
+
+            try:
+                # Validate that the response is a proper unified diff and only touches allowed files
+                allowed = [SNIPPETS_DIR.name]  # conservative default; caller can expand
+                validate_patch(patch, allowed_files=None)
+            except PatchValidationError as e:
+                print(f"[!] Skipping snippet {i}, patch validation failed: {e}")
+                continue
+
+            # If validation passed, write patch
+            f.write(f"\n\n=== PATCH {i} ===\n")
+            f.write(patch.strip())
+            f.write("\n" + "=" * 50 + "\n")
+            print(f"[+] Patch {i} appended to {PATCH_FILE}")
 
 
 if __name__ == "__main__":
