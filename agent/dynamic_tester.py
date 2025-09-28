@@ -1,123 +1,140 @@
 import os
 import subprocess
 from pathlib import Path
-import shutil
+from datetime import datetime
+import argparse
 
-# === Folder setup ===
-BASE_DIR = Path(__file__).resolve().parent
-PATCHES_DIR = BASE_DIR / "patches"
-CPP_DIR = BASE_DIR.parent / "cpp_project"
-PY_DIR = BASE_DIR.parent / "python_repo"
-REPORT_FILE = BASE_DIR / "dynamic_report.md"
-
-PATCH_FILE = PATCHES_DIR / "all_patches.diff"
+# === Paths ===
+BASE_DIR = Path(__file__).resolve().parent.parent
+PATCH_FILE = BASE_DIR / "agent" / "patches" / "all_patches.diff"
+REPORT_FILE = BASE_DIR / "dynamic_analysis_report.txt"
+CPP_REPO = BASE_DIR / "cpp_project" / "puzzle-2"
+PY_REPO = BASE_DIR / "python_repo"
 
 
-def run_cmd(cmd, cwd=None):
-    """Utility: run shell command & capture output"""
+def run_command(cmd, cwd=None, input_text=None):
+    """Run shell command, optionally with stdin text."""
     try:
         result = subprocess.run(
             cmd,
+            shell=isinstance(cmd, str),
+            input=input_text,
+            text=True,
             cwd=cwd,
             capture_output=True,
-            text=True,
-            timeout=60
         )
-        return result.returncode, result.stdout + result.stderr
+        return result.returncode == 0, result.stdout + result.stderr
     except Exception as e:
-        return 1, str(e)
+        return False, str(e)
 
 
-def apply_patch(patch_file: Path, target_dir: Path):
-    """Apply patch file to a repo (git apply)"""
-    return run_cmd(["git", "apply", str(patch_file)], cwd=target_dir)
-
-
-def revert_patch(patch_file: Path, target_dir: Path):
-    """Revert applied patch (if failed)"""
-    return run_cmd(["git", "apply", "-R", str(patch_file)], cwd=target_dir)
-
-
-def test_cpp_project():
-    """Compile and run C++ tests"""
-    cpp_files = list(CPP_DIR.glob("*.cpp"))
-    if not cpp_files:
-        return False, "No C++ source files found."
-
-    exe_file = CPP_DIR / "test_exec.exe"
-    code, out = run_cmd(["g++", "-std=c++17", "-o", str(exe_file)] + [str(f) for f in cpp_files], cwd=CPP_DIR)
-    if code != 0:
-        return False, f"Compile error:\n{out}"
-
-    code, out = run_cmd([str(exe_file)], cwd=CPP_DIR)
-    return code == 0, out
-
-
-def test_python_project():
-    """Run pytest or unittest"""
-    if not PY_DIR.exists():
-        return False, "No Python repo found."
-
-    # Prefer pytest, fallback to unittest
-    if (PY_DIR / "tests").exists():
-        code, out = run_cmd(["pytest", "-q"], cwd=PY_DIR)
-    else:
-        code, out = run_cmd(["python", "-m", "unittest", "discover"], cwd=PY_DIR)
-
-    return code == 0, out
-
-
-def run_dynamic_analysis():
+# === PATCH HANDLER ===
+def apply_patches(target_repo, report_lines):
+    """Apply patches from all_patches.diff one by one. Skip invalid patches."""
     if not PATCH_FILE.exists():
-        print("[!] No patch file found.")
+        report_lines.append("[!] No patch file found.\n")
         return
 
-    results = []
-    patches = PATCH_FILE.read_text(encoding="utf-8").split("=== PATCH")
-    print(f"[*] Found {len(patches)-1} patches to test")
+    current_patch = []
+    patch_idx = 0
 
-    for i, patch_block in enumerate(patches[1:], start=1):
-        tmp_patch = PATCHES_DIR / f"_tmp_patch_{i}.diff"
-        tmp_patch.write_text(patch_block, encoding="utf-8")
+    with open(PATCH_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.startswith("diff --git"):
+                if current_patch:
+                    patch_idx += 1
+                    apply_single_patch(patch_idx, current_patch, target_repo, report_lines)
+                    current_patch = []
+            if line.strip() and not line.startswith("==="):  # skip dekorasi
+                current_patch.append(line)
 
-        print(f"\n🔧 Testing PATCH {i}...")
+        if current_patch:
+            patch_idx += 1
+            apply_single_patch(patch_idx, current_patch, target_repo, report_lines)
 
-        # First try apply to C++ repo
-        success, log = False, ""
-        if CPP_DIR.exists():
-            code, out = apply_patch(tmp_patch, CPP_DIR)
-            if code == 0:
-                success, log = test_cpp_project()
-                if not success:
-                    revert_patch(tmp_patch, CPP_DIR)
-            else:
-                log = f"Failed to apply to C++: {out}"
 
-        # If not C++, try Python repo
-        if not success and PY_DIR.exists():
-            code, out = apply_patch(tmp_patch, PY_DIR)
-            if code == 0:
-                success, log = test_python_project()
-                if not success:
-                    revert_patch(tmp_patch, PY_DIR)
-            else:
-                log = f"Failed to apply to Python: {out}"
+def apply_single_patch(idx, patch_lines, repo, report_lines):
+    """Apply one patch directly via stdin (no temp file)."""
+    patch_text = "".join(patch_lines)
+    success, output = run_command(["git", "apply", "-"], cwd=repo, input_text=patch_text)
 
-        status = "✅ Success" if success else "❌ Failed"
-        results.append((i, status, log[:500]))  # truncate long logs
+    report_lines.append(f"\n=== PATCH {idx} ===")
+    if success:
+        report_lines.append("[+] Patch applied successfully.\n")
+    else:
+        report_lines.append(f"[!] Patch failed to apply:\n{output.strip()}\n")
 
-        # Clean up
-        tmp_patch.unlink(missing_ok=True)
 
-    # Write report
-    with open(REPORT_FILE, "w", encoding="utf-8") as f:
-        f.write("# Dynamic Analysis Report\n\n")
-        for i, status, log in results:
-            f.write(f"## Patch {i}: {status}\n")
-            f.write("```\n" + log.strip() + "\n```\n\n")
+# === CPP TESTER ===
+def run_cpp_tests(report_lines):
+    cpp_files = list(CPP_REPO.rglob("*.cpp"))
+    if not cpp_files:
+        report_lines.append("[!] No C++ files found to compile.\n")
+        return
 
-    print(f"\n[✅] Dynamic analysis finished. Report saved to {REPORT_FILE}")
+    exe_name = "main.exe" if os.name == "nt" else "main"
+    compile_cmd = (
+        f"g++ -std=c++17 -Wall -Wextra -fsanitize=address -o {exe_name} "
+        + " ".join(str(f) for f in cpp_files)
+    )
+
+    success, output = run_command(compile_cmd, cwd=CPP_REPO)
+    report_lines.append("\n=== BUILD & RUN TESTS (C++) ===")
+    if not success:
+        report_lines.append(f"[!] Compilation failed:\n{output}\n")
+        return
+
+    run_cmd = exe_name if os.name == "nt" else f"./{exe_name}"
+    success, output = run_command(run_cmd, cwd=CPP_REPO)
+    if not success:
+        report_lines.append(f"[!] Runtime failed:\n{output}\n")
+    else:
+        report_lines.append(f"[+] Program executed successfully:\n{output}\n")
+
+
+# === PY TESTER ===
+def run_py_tests(report_lines):
+    report_lines.append("\n=== RUN TESTS (Python) ===")
+    if not PY_REPO.exists():
+        report_lines.append("[!] Python repo not found.\n")
+        return
+
+    success, output = run_command("pytest -q", cwd=PY_REPO)
+    if not success:
+        report_lines.append(f"[!] Python tests failed:\n{output}\n")
+    else:
+        report_lines.append(f"[+] Python tests passed:\n{output}\n")
+
+
+# === MAIN ===
+def main():
+    parser = argparse.ArgumentParser(description="Dynamic Tester")
+    parser.add_argument("--cpp", action="store_true", help="Run C++ dynamic tests")
+    parser.add_argument("--py", action="store_true", help="Run Python dynamic tests")
+    args = parser.parse_args()
+
+    report_lines = []
+    report_lines.append("# Dynamic Analysis Report")
+    report_lines.append(f"Date: {datetime.now()}\n")
+
+    if args.cpp:
+        report_lines.append(f"[*] Applying patches to CPP repo: {CPP_REPO}")
+        apply_patches(CPP_REPO, report_lines)
+        run_cpp_tests(report_lines)
+
+    elif args.py:
+        report_lines.append(f"[*] Applying patches to Python repo: {PY_REPO}")
+        apply_patches(PY_REPO, report_lines)
+        run_py_tests(report_lines)
+
+    else:
+        report_lines.append("[!] No language specified. Use --cpp or --py")
+
+    final_report = "\n".join(report_lines)
+    REPORT_FILE.write_text(final_report, encoding="utf-8")
+    print(final_report)
+    print(f"\n[+] Report saved to {REPORT_FILE}")
 
 
 if __name__ == "__main__":
-    run_dynamic_analysis()
+    main()
