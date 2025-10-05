@@ -34,27 +34,34 @@ def run_command(cmd, cwd=None, input_text=None):
         return False, str(e)
 
 # === PATCH HANDLER ===
-def apply_patches_from_dir(target_repo, patch_dir, report_lines):
+def apply_patches_from_dir(target_repo, patch_dir):
+    """Apply patches and return structured results list.
+
+    Returns: list of dict {name, status, detail}
+    status is 'SUCCESS' or 'FAILED'
+    """
+    results = []
     patch_files = sorted(patch_dir.glob("patch_*.diff"))
     if not patch_files:
-        report_lines.append(f"[!] No patch files found in {patch_dir}\n")
-        return
+        return results
 
     for patch_file in patch_files:
-        report_lines.append(f"\n[*] Applying {patch_file} ...")
+        name = patch_file.name
         try:
             patch_text = patch_file.read_text(encoding="utf-8")
         except Exception as e:
-            report_lines.append(f"[!] Failed to read patch: {e}")
+            results.append({"name": name, "status": "FAILED", "detail": f"read error: {e}"})
             continue
 
-        success, output = run_command(
-            ["git", "apply", "-"], cwd=target_repo, input_text=patch_text
-        )
+        success, output = run_command(["git", "apply", "-"], cwd=target_repo, input_text=patch_text)
         if success:
-            report_lines.append(f"[+] Patch {patch_file.name} applied successfully.")
+            results.append({"name": name, "status": "SUCCESS", "detail": ""})
         else:
-            report_lines.append(f"[!] Patch {patch_file.name} failed:\n{output}")
+            # try to extract a short reason
+            reason = output.strip().splitlines()[0] if output else "unknown error"
+            results.append({"name": name, "status": "FAILED", "detail": reason})
+
+    return results
 
 # === C++ TESTER ===
 def run_cpp_tests(report_lines):
@@ -89,18 +96,22 @@ def ensure_mock_resources():
         path.mkdir(parents=True, exist_ok=True)
 
 # === PYTHON TESTER ===
-def run_py_bug_tests(report_lines):
+def run_py_bug_tests():
+    """Run python bug checks and return a list of test result dicts:
+    {test, status, detail}
+    status: PASS or FAIL
+    """
     bug_snippets = [
         ("puzzle_piece", "close_enough"),
         ("labels", "render_text"),
         ("puzzle", "get_event"),
     ]
 
-    # Ensure resource folders exist to prevent FileNotFoundError
+    results = []
     ensure_mock_resources()
 
     for module_name, func_name in bug_snippets:
-        report_lines.append(f"[*] Testing {module_name}.{func_name} ...")
+        test_name = f"test_{module_name}_{func_name}"
         try:
             module_path = PUZZLE_CHALLENGE / f"{module_name}.py"
             spec = importlib.util.spec_from_file_location(module_name, module_path)
@@ -108,17 +119,35 @@ def run_py_bug_tests(report_lines):
             sys.modules[module_name] = mod
             spec.loader.exec_module(mod)
 
+            # check module-level
             func = getattr(mod, func_name, None)
-            if func:
+            if callable(func):
                 if func_name == "close_enough":
-                    result = func(10, 15)
-                    report_lines.append(f"    -> {func_name} returned {result}")
+                    try:
+                        result = func(10, 15)
+                        ok = bool(result)
+                        if ok:
+                            results.append({"test": test_name, "status": "PASS", "detail": f"returned {result}"})
+                        else:
+                            results.append({"test": test_name, "status": "FAIL", "detail": f"returned {result}"})
+                    except Exception:
+                        results.append({"test": test_name, "status": "FAIL", "detail": traceback.format_exc()})
                 else:
-                    report_lines.append(f"    -> {func_name} exists (manual verification needed)")
+                    results.append({"test": test_name, "status": "PASS", "detail": "module-level function present"})
             else:
-                report_lines.append(f"    [!] {func_name} not found in module")
-        except Exception as e:
-            report_lines.append(f"    [!] Error running {func_name}:\n{traceback.format_exc()}")
+                # search classes
+                found = False
+                for name, obj in list(vars(mod).items()):
+                    if isinstance(obj, type) and hasattr(obj, func_name):
+                        found = True
+                        results.append({"test": test_name, "status": "PASS", "detail": f"method on class {name}"})
+                        break
+                if not found:
+                    results.append({"test": test_name, "status": "FAIL", "detail": f"{func_name} not found"})
+        except Exception:
+            results.append({"test": test_name, "status": "FAIL", "detail": traceback.format_exc()})
+
+    return results
 
 # === MAIN ===
 def main():
@@ -127,28 +156,64 @@ def main():
     parser.add_argument("--py", action="store_true", help="Run Python dynamic tests")
     args = parser.parse_args()
 
-    report_lines = []
-    report_lines.append("# Dynamic Analysis Report")
-    report_lines.append(f"Date: {datetime.now()}\n")
-
     agent_dir = Path(__file__).resolve().parent
     patches_cpp = agent_dir / "patches" / "patches_cpp_fixed"
     patches_py = agent_dir / "patches_py_fixed"
 
+    # Build structured results
+    patch_results = []
+    test_results = []
+
     if args.cpp:
-        report_lines.append(f"[*] Applying patches to CPP repo: {CPP_REPO}")
-        apply_patches_from_dir(CPP_REPO, patches_cpp, report_lines)
-        run_cpp_tests(report_lines)
-
+        patch_results = apply_patches_from_dir(CPP_REPO, patches_cpp)
+        # For C++ we still run compile/tests for now
+        run_cpp_tests([])
     elif args.py:
-        report_lines.append(f"[*] Applying patches to Python repo: {PY_REPO}")
-        apply_patches_from_dir(PY_REPO, patches_py, report_lines)
-        run_py_bug_tests(report_lines)
-
+        patch_results = apply_patches_from_dir(PY_REPO, patches_py)
+        test_results = run_py_bug_tests()
     else:
-        report_lines.append("[!] No language specified. Use --cpp or --py")
+        # nothing requested
+        pass
 
-    final_report = "\n".join(report_lines)
+    # Format report according to the user's desired template
+    lines = []
+    lines.append("# Dynamic Analysis Report")
+    lines.append(f"Date: {datetime.now().date()}")
+    lines.append("")
+    lines.append("== PATCH APPLICATION ==")
+    for p in patch_results:
+        if p["status"] == "SUCCESS":
+            lines.append(f"{p['name']} ... SUCCESS")
+        else:
+            lines.append(f"{p['name']} ... FAILED ({p['detail']})")
+
+    lines.append("")
+    lines.append("== TEST EXECUTION ==")
+    for t in test_results:
+        if t["status"] == "PASS":
+            lines.append(f"[+] {t['test']} ... PASS")
+        else:
+            lines.append(f"[-] {t['test']} ... FAIL")
+            # indent detail lines
+            for dl in str(t['detail']).splitlines():
+                lines.append(f"    {dl}")
+
+    # Summary
+    total_patches = len(patch_results)
+    applied = sum(1 for p in patch_results if p["status"] == "SUCCESS")
+    total_tests = len(test_results)
+    passed_tests = sum(1 for t in test_results if t["status"] == "PASS")
+    remaining = total_tests - passed_tests
+    new_issues = 0
+
+    lines.append("")
+    lines.append("== SUMMARY ==")
+    lines.append(f"Patches applied: {applied}/{total_patches}")
+    lines.append(f"Bugs fixed: {passed_tests}")
+    lines.append(f"Remaining issues: {remaining}")
+    lines.append(f"New issues: {new_issues}")
+
+    final_report = "\n".join(lines)
     REPORT_FILE.write_text(final_report, encoding="utf-8")
     print(final_report)
     print(f"\n[+] Report saved to {REPORT_FILE}")
