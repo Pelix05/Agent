@@ -3,11 +3,120 @@ import re
 import subprocess
 from pathlib import Path
 from dotenv import load_dotenv
-from langchain_core.messages import HumanMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_openai import ChatOpenAI
-from langchain_ollama import ChatOllama
+# langchain clients are optional in developer environments; import defensively
+try:
+    from langchain_core.messages import HumanMessage
+except Exception:
+    # minimal fallback so code that constructs HumanMessage doesn't crash at import time
+    class HumanMessage:
+        def __init__(self, content: str):
+            self.content = content
+import concurrent.futures
+import multiprocessing
+import time
+import traceback
+import argparse
+
+try:
+    from langchain_google_genai import ChatGoogleGenerativeAI
+except Exception:
+    ChatGoogleGenerativeAI = None
+
+try:
+    from langchain_openai import ChatOpenAI
+except Exception:
+    ChatOpenAI = None
+
+try:
+    from langchain_ollama import ChatOllama
+except Exception:
+    ChatOllama = None
 from prompts import BUG_FIX_PROMPT
+
+
+def _invoke_child_process(name, prompt, q):
+    """Top-level child process target for invoking LLM clients.
+
+    This must be at module level so it is picklable on Windows.
+    """
+    try:
+        if name == "Gemini":
+            try:
+                from langchain_core.messages import HumanMessage as HM
+            except Exception:
+                class HM:
+                    def __init__(self, content: str):
+                        self.content = content
+            try:
+                from langchain_google_genai import ChatGoogleGenerativeAI as Client
+            except Exception:
+                q.put(("err", "Gemini client not installed"))
+                return
+            key = os.getenv("GEMINI_API_KEY")
+            if not key:
+                q.put(("err", "GEMINI_API_KEY not set"))
+                return
+            client = Client(model="gemini-2.5-flash", google_api_key=key, temperature=0.1)
+            resp = client.invoke([HM(content=prompt)])
+            q.put(("ok", getattr(resp, "content", str(resp))))
+
+        elif name == "Qwen":
+            try:
+                from langchain_core.messages import HumanMessage as HM
+            except Exception:
+                class HM:
+                    def __init__(self, content: str):
+                        self.content = content
+            try:
+                from langchain_openai import ChatOpenAI as Client
+            except Exception:
+                q.put(("err", "Qwen client not installed"))
+                return
+            key = os.getenv("QWEN_API_KEY")
+            if not key:
+                q.put(("err", "QWEN_API_KEY not set"))
+                return
+            client = Client(api_key=key, base_url="https://dashscope.aliyuncs.com/compatible-mode/v1", model="qwen1.5-7b-chat")
+            resp = client.invoke([HM(content=prompt)])
+            q.put(("ok", getattr(resp, "content", str(resp))))
+
+        elif name == "Ollama":
+            try:
+                from langchain_core.messages import HumanMessage as HM
+            except Exception:
+                class HM:
+                    def __init__(self, content: str):
+                        self.content = content
+            try:
+                from langchain_ollama import ChatOllama as Client
+            except Exception:
+                q.put(("err", "Ollama client not installed"))
+                return
+            model = os.getenv("LOCAL_MODEL", "deepseek-coder")
+            client = Client(model=model, temperature=0.3)
+            resp = client.invoke([HM(content=prompt)])
+            q.put(("ok", getattr(resp, "content", str(resp))))
+
+        else:
+            q.put(("err", f"Unknown LLM name: {name}"))
+    except Exception as e:
+        # Attempt to put error into queue for parent to read
+        try:
+            q.put(("err", str(e)))
+        except Exception:
+            pass
+        # Also write full traceback to a file for post-mortem debugging
+        try:
+            ts = int(time.time())
+            pid = os.getpid()
+            PATCHES_DIR = Path(__file__).resolve().parent / "patches"
+            PATCHES_DIR.mkdir(exist_ok=True)
+            fname = PATCHES_DIR / f"child_error_{name}_{ts}_{pid}.log"
+            with open(fname, "w", encoding="utf-8") as fh:
+                fh.write("Exception in child process:\n")
+                traceback.print_exc(file=fh)
+        except Exception:
+            pass
 
 # === Load env ===
 load_dotenv()
@@ -16,20 +125,41 @@ GEMINI_KEY = os.getenv("GEMINI_API_KEY")
 QWEN_KEY = os.getenv("QWEN_API_KEY")
 LOCAL_MODEL = os.getenv("LOCAL_MODEL", "deepseek-coder")
 
+# If True, skip calling remote LLMs (useful for debugging/offline runs)
+SKIP_LLM = False
+
 # === LangChain Clients ===
-gemini_llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
-    google_api_key=GEMINI_KEY,
-    temperature=0.1
-) if GEMINI_KEY else None
+gemini_llm = None
+qwen_llm = None
+ollama_llm = None
 
-qwen_llm = ChatOpenAI(
-    api_key=QWEN_KEY,
-    base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-    model="qwen1.5-7b-chat"
-) if QWEN_KEY else None
+# Instantiate LLM clients only if their classes are available and keys/config present
+if ChatGoogleGenerativeAI and GEMINI_KEY:
+    try:
+        gemini_llm = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash",
+            google_api_key=GEMINI_KEY,
+            temperature=0.1,
+        )
+    except Exception as e:
+        print(f"[!] Failed to init Gemini client: {e}")
 
-ollama_llm = ChatOllama(model=LOCAL_MODEL, temperature=0.3)
+if ChatOpenAI and QWEN_KEY:
+    try:
+        qwen_llm = ChatOpenAI(
+            api_key=QWEN_KEY,
+            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+            model="qwen1.5-7b-chat",
+        )
+    except Exception as e:
+        print(f"[!] Failed to init Qwen client: {e}")
+
+if ChatOllama:
+    try:
+        ollama_llm = ChatOllama(model=LOCAL_MODEL, temperature=0.3)
+    except Exception as e:
+        print(f"[!] Failed to init Ollama client: {e}")
+    # Ollama client initialized (local fallback)
 
 # === Folder setup ===
 BASE_DIR = Path(__file__).resolve().parent
@@ -50,77 +180,179 @@ def run_command(cmd, cwd=None):
     print(result.stdout + result.stderr)
 
 
-# === Fallback bug fixer ===
 def ask_llm(prompt: str) -> str:
-    """Minta patch ke Gemini → Qwen → Ollama (fallback)."""
-    if gemini_llm:
-        try:
-            resp = gemini_llm.invoke([HumanMessage(content=prompt)])
-            if "diff --git" in resp.content:
-                print("[+] Patch from Gemini")
-                return resp.content
-        except Exception as e:
-            print(f"[!] Gemini failed: {e}")
+    """Ask Gemini → Qwen → Ollama for a patch, with longer timeouts and graceful fallback."""
+    global SKIP_LLM
+    if SKIP_LLM:
+        print("[Debug] SKIP_LLM is set; skipping LLM calls and returning empty patch")
+        return ""
 
-    if qwen_llm:
+    def invoke_with_timeout(llm, name, timeout=20):
+        """Invoke an LLM client in a thread with timeout."""
+        if not llm:
+            print(f"[Debug] {name} client not initialized, skipping.")
+            return None
+        print(f"[Debug] Invoking {name} (timeout={timeout}s) via thread")
         try:
-            resp = qwen_llm.invoke([HumanMessage(content=prompt)])
-            if "diff --git" in resp.content:
-                print("[+] Patch from Qwen")
-                return resp.content
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
+                fut = ex.submit(lambda: llm.invoke([HumanMessage(content=prompt)]))
+                try:
+                    resp = fut.result(timeout=timeout)
+                    return resp
+                except concurrent.futures.TimeoutError:
+                    print(f"[!] {name} invoke timed out after {timeout}s")
+                    return None
         except Exception as e:
-            print(f"[!] Qwen failed: {e}")
+            print(f"[!] {name} failed during invoke: {e}")
+            return None
 
-    # Fallback ke Ollama
-    resp = ollama_llm.invoke([HumanMessage(content=prompt)])
-    return resp.content
+    # Print which LLMs are available
+    print(f"[Debug] LLM availability: Gemini={'yes' if gemini_llm else 'no'}, "
+          f"Qwen={'yes' if qwen_llm else 'no'}, Ollama={'yes' if ollama_llm else 'no'}")
+
+    # Try Gemini first, then Qwen, then Ollama
+    for llm, name, t in [#(gemini_llm, "Gemini", 20),
+                          (qwen_llm, "Qwen", 60),
+                          (ollama_llm, "Ollama", 30)]:
+        resp = invoke_with_timeout(llm, name, timeout=t)
+        if resp is None:
+            print(f"[Debug] {name} returned no response, moving to next LLM...")
+            continue
+        content = getattr(resp, "content", None)
+        print(f"[Debug] {name} response length: {len(content) if content else 0}")
+        if content and "diff --git" in content:
+            print(f"[+] Patch from {name}")
+            return content
+        else:
+            print(f"[Debug] {name} response did not contain a patch, skipping.")
+
+    print("[!] All LLMs failed to produce a patch for this snippet.")
+    return ""
 
 
 def clean_patch_output(patch: str) -> str:
-    """Bersihin output LLM jadi pure unified diff patch."""
+    """Clean LLM output to a valid unified diff patch."""
     if not patch:
         return ""
-    patch = re.sub(r"^```diff", "", patch, flags=re.MULTILINE).strip()
-    patch = re.sub(r"^```", "", patch, flags=re.MULTILINE).strip()
-    idx = patch.find("diff --git")
-    if idx != -1:
-        patch = patch[idx:]
-    else:
+
+    # Remove markdown
+    patch = re.sub(r"^```diff", "", patch, flags=re.MULTILINE)
+    patch = re.sub(r"^```", "", patch, flags=re.MULTILINE)
+
+    valid_lines = []
+    for line in patch.splitlines():
+        line = line.rstrip()
+        if line.startswith("diff --git"):
+            parts = line.split()
+            if len(parts) != 4:
+                continue
+        if line.startswith(("diff --git", "--- ", "+++ ", "@@ ", "+", "-", " ")):
+            # Skip empty + or - lines
+            if line in ("+", "-"):
+                continue
+            valid_lines.append(line)
+
+    patch = "\n".join(valid_lines)
+
+    if not patch.startswith("diff --git"):
         return ""
+
     return patch.strip()
 
+def validate_patch(patch_text: str) -> bool:
+    if not patch_text:
+        return False
+    if ("diff --git" in patch_text 
+        and re.search(r"@@ -\d+,\d+ \+\d+,\d+ @@", patch_text) 
+        and "--- a/" in patch_text 
+        and "+++ b/" in patch_text):
+        return True
+    return False
 
-def run_pipeline(report_file, snippet_file):
-    """Jalankan patch pipeline dari hasil analisis & snippet."""
+
+def run_pipeline(report_file, snippet_file, lang="py"):
+    """
+    Run patch pipeline for snippets, saving each patch separately.
+    lang: "py" for Python, "cpp" for C++
+    """
+    # ✅ Choose target directory based on language
+    target_folder = PATCHES_DIR / f"patches_{lang}"
+    target_folder.mkdir(parents=True, exist_ok=True)
+
+    # ✅ Basic existence check
     if not report_file.exists() or not snippet_file.exists():
         print("[!] Report or snippet not found.")
         return
 
+    # ✅ Load report + snippets
     report = report_file.read_text(encoding="utf-8")
     snippets = snippet_file.read_text(encoding="utf-8").split("--- ")
 
-    print(f"[*] Found {len(snippets) - 1} snippets to process")
+    print(f"[*] Found {len(snippets) - 1} snippets to process in {lang.upper()} mode")
 
-    with open(PATCH_FILE, "w", encoding="utf-8") as f:
-        for i, snippet in enumerate(snippets[1:], start=1):
-            print(f"🔧 Processing snippet {i}...")
-            prompt = BUG_FIX_PROMPT.format(
-                code_snippet=snippet.strip(),
-                analysis=report
-            )
-            raw_patch = ask_llm(prompt)
-            patch = clean_patch_output(raw_patch)
+    for i, snippet in enumerate(snippets[1:], start=1):
+        print(f"🔧 Processing snippet {i}...")
 
-            if patch:
-                f.write(f"\n\n=== PATCH {i} ===\n")
-                f.write(patch)
-                f.write("\n" + "=" * 50 + "\n")
-                print(f"[+] Patch {i} appended to {PATCH_FILE}")
-            else:
-                print(f"[!] Skipping snippet {i}, invalid diff format")
+        # ✅ Prepare LLM prompt
+        prompt = BUG_FIX_PROMPT.format(
+            code_snippet=snippet.strip(),
+            analysis=report
+        )
+
+        # ✅ Call LLM for patch suggestion
+        raw_patch = ask_llm(prompt)
+
+        # ✅ Save raw LLM response (for debugging)
+        raw_file = target_folder / f"raw_resp_{i}.txt"
+        raw_file.write_text(raw_patch or "", encoding="utf-8")
+
+        preview = (raw_patch or "").strip()[:400]
+        print(f"[Debug] Raw LLM response preview (first 400 chars):\n{preview}\n--- end preview ---")
+
+        # ✅ Clean + Sanitize Patch
+        sanitized = sanitize_patch(raw_patch or "")
+        patch = clean_patch_output(sanitized)
+
+        # ✅ Validate before saving
+        if validate_patch(patch):
+            patch_file = target_folder / f"patch_{i}.diff"
+            patch_file.write_text(patch, encoding="utf-8")
+            print(f"[+] ✅ Patch {i} written to {patch_file}")
+        else:
+            print(f"[!] ⚠️ Skipping snippet {i}, invalid diff format")
+            skipped_file = target_folder / f"skipped_patch_{i}.txt"
+            skipped_file.write_text(raw_patch or "", encoding="utf-8")
 
 
-# === AI-powered Intent classifier ===
+def sanitize_patch(raw_patch: str) -> str:
+    """
+    Remove markdown code blocks, explanations, and any text after the diff body.
+    Ensures only valid unified diff remains.
+    """
+    lines = raw_patch.strip().splitlines()
+    clean_lines = []
+    inside_patch = False
+
+    for line in lines:
+        # Start when we see the diff header
+        if line.startswith("diff --git"):
+            inside_patch = True
+            clean_lines = [line]
+            continue
+        if not inside_patch:
+            continue
+
+        # Stop when explanation or markdown starts
+        if line.strip().startswith("Explanation:") or line.strip().startswith("```"):
+            break
+
+        # Accept only valid diff lines
+        if line.startswith(("index ", "--- ", "+++ ", "@@", "+", "-", " ")):
+            clean_lines.append(line)
+
+    return "\n".join(clean_lines).strip()
+
+# === AI-powered Intent classifier ===  
 INTENT_PROMPT = """
 You are an AI intent classifier for a software engineering agent.
 
@@ -147,19 +379,7 @@ def classify_intent(user_input: str) -> str:
     user_input_lower = user_input.lower()
     print(f"[Debug] User input: {user_input_lower}")
 
-    # Try LLM-based classifier
-    try:
-        for llm, name in [(gemini_llm, "Gemini"), (qwen_llm, "Qwen"), (ollama_llm, "Ollama")]:
-            if llm:
-                resp = llm.invoke([HumanMessage(content=INTENT_PROMPT + f"\n\nUser: {user_input}")])
-                intent = resp.content.strip().lower()
-                if intent in ["static_cpp", "static_py", "patch_cpp", "patch_py", "dynamic_cpp", "dynamic_py", "exit"]:
-                    print(f"[AI Intent] {intent} (via {name})")
-                    return intent
-    except Exception as e:
-        print(f"[!] Intent LLM failed, fallback to keyword: {e}")
-
-    # Keyword fallback
+    # Keyword fallback first (avoid blocking on unavailable LLMs)
     if any(word in user_input_lower for word in ['cpp', 'c++', 'cplusplus']):
         if any(word in user_input_lower for word in ['patch', 'fix', 'repair']):
             return 'patch_cpp'
@@ -180,6 +400,17 @@ def classify_intent(user_input: str) -> str:
             return 'static_py'
     elif any(word in user_input_lower for word in ['exit', 'quit', 'stop', 'close']):
         return 'exit'
+    # If keywords couldn't decide, try the LLMs as a last resort
+    try:
+        for llm, name in [(gemini_llm, "Gemini"), (qwen_llm, "Qwen"), (ollama_llm, "Ollama")]:
+            if llm:
+                resp = llm.invoke([HumanMessage(content=INTENT_PROMPT + f"\n\nUser: {user_input}")])
+                intent = getattr(resp, 'content', str(resp)).strip().lower()
+                if intent in ["static_cpp", "static_py", "patch_cpp", "patch_py", "dynamic_cpp", "dynamic_py", "exit"]:
+                    print(f"[AI Intent] {intent} (via {name})")
+                    return intent
+    except Exception as e:
+        print(f"[!] Intent LLM failed (final fallback): {e}")
 
     return "unknown"
 
@@ -193,9 +424,9 @@ def interpret_command(user_input: str):
     elif intent == "static_py":
         run_command("python agent/analyzer_py.py")
     elif intent == "patch_cpp":
-        run_pipeline(REPORT_CPP, SNIPPETS_CPP)
+        run_pipeline(REPORT_CPP, SNIPPETS_CPP, lang="cpp")
     elif intent == "patch_py":
-        run_pipeline(REPORT_PY, SNIPPETS_PY)
+        run_pipeline(REPORT_PY, SNIPPETS_PY, lang="py")
     elif intent == "dynamic_cpp":
         run_command("python dynamic_tester.py --cpp", cwd=BASE_DIR)
     elif intent == "dynamic_py":
@@ -229,4 +460,16 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="AI Agent runner")
+    parser.add_argument("--cmd", type=str, help="Run single command and exit (e.g. --cmd \"patch cpp\")")
+    parser.add_argument("--no-llm", action="store_true", help="Skip remote LLM calls (debug/offline)")
+    args = parser.parse_args()
+
+    if args.no_llm:
+        SKIP_LLM = True
+
+    if args.cmd:
+        # Run a single command non-interactively and exit
+        interpret_command(args.cmd)
+    else:
+        main()

@@ -1,0 +1,6 @@
+diff --git a/idle.py b/idle.py
+--- a/idle.py
++++ b/idle.py
+@@ -1,1 +1,1 @@
+-import pygame as pg
++import pygame

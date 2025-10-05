@@ -1,0 +1,6 @@
+diff --git a/dragging_section.py b/dragging_section.py
+--- a/dragging_section.py
++++ b/dragging_section.py
+@@ -1,1 +1,1 @@
+-import pygame as pg
++import pygame

@@ -1,0 +1,8 @@
+diff --git a/dragging_piece.py b/dragging_piece.py
+--- a/dragging_piece.py
++++ b/dragging_piece.py
+@@ -1,3 +1,4 @@
+ import pygame as pg
++import prepare
+ from state_engine import GameState
+    # Rest of the class definition...

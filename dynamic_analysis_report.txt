@@ -1,536 +1,99 @@
 # Dynamic Analysis Report
-Date: 2025-09-29 02:19:39.881029
-
-[*] Applying patches to CPP repo: D:\semester5\ai-agent-project\cpp_project\puzzle-2
-
-=== PATCH 1 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 11
-
-
-=== PATCH 2 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 3 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 4 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 16
-
-
-=== PATCH 5 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 16
-
-
-=== PATCH 6 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 16
-
-
-=== PATCH 7 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 11
-
-
-=== PATCH 8 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 11
-
-
-=== PATCH 9 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 16
-
-
-=== PATCH 10 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 11 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 22
-
-
-=== PATCH 12 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 7
-
-
-=== PATCH 13 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 14 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 15 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 16 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 18
-
-
-=== PATCH 17 ===
-[!] Patch failed to apply:
-error: puzzle-2/database.cpp: No such file or directory
-
-
-=== PATCH 18 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 11
-
-
-=== PATCH 19 ===
-[!] Patch failed to apply:
-error: git diff header lacks filename information when removing 1 leading pathname component (line 3)
-
-
-=== PATCH 20 ===
-[!] Patch failed to apply:
-error: git diff header lacks filename information when removing 1 leading pathname component (line 3)
-
-
-=== PATCH 21 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 14
-
-
-=== PATCH 22 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 19
-
-
-=== PATCH 23 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 8
-
-
-=== PATCH 24 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 8
-
-
-=== PATCH 25 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 14
-
-
-=== PATCH 26 ===
-[!] Patch failed to apply:
-error: git diff header lacks filename information (line 4)
-
-
-=== PATCH 27 ===
-[!] Patch failed to apply:
-error: git diff header lacks filename information when removing 1 leading pathname component (line 3)
-
-
-=== PATCH 28 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 16
-
-
-=== PATCH 29 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 15
-
-
-=== PATCH 30 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 14
-
-
-=== PATCH 31 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 12
-
-
-=== PATCH 32 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 33 ===
-[!] Patch failed to apply:
-error: No valid patches in input (allow with "--allow-empty")
-
-
-=== PATCH 34 ===
-[!] Patch failed to apply:
-error: No valid patches in input (allow with "--allow-empty")
-
-
-=== PATCH 35 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 12
-
-
-=== PATCH 36 ===
-[!] Patch failed to apply:
-error: git diff header lacks filename information when removing 1 leading pathname component (line 3)
-
-
-=== PATCH 37 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 11
-
-
-=== PATCH 38 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 12
-
-
-=== PATCH 39 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 17
-
-
-=== PATCH 40 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 12
-
-
-=== PATCH 41 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 16
-
-
-=== PATCH 42 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 43 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 12
-
-
-=== PATCH 44 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 45 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 6
-
-
-=== PATCH 46 ===
-[!] Patch failed to apply:
-error: patch fragment without header at line 15: @@ -18,7 +18,7 @@ BmpInfoHeader::BmpInfoHeader() {?
-
-
-=== PATCH 47 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 17
-
-
-=== PATCH 48 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 49 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 13
-
-
-=== PATCH 50 ===
-[!] Patch failed to apply:
-error: git diff header lacks filename information (line 4)
-
-
-=== PATCH 51 ===
-[!] Patch failed to apply:
-error: git diff header lacks filename information (line 4)
-
-
-=== PATCH 52 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 7
-
-
-=== PATCH 53 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 12
-
-
-=== PATCH 54 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 17
-
-
-=== PATCH 55 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 56 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 13
-
-
-=== PATCH 57 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 13
-
-
-=== PATCH 58 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 13
-
-
-=== PATCH 59 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 60 ===
-[!] Patch failed to apply:
-error: puzzle-2/bmp/bmp.cpp: No such file or directory
-
-
-=== PATCH 61 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 15
-
-
-=== PATCH 62 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 63 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 11
-
-
-=== PATCH 64 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 11
-
-
-=== PATCH 65 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 11
-
-
-=== PATCH 66 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 14
-
-
-=== PATCH 67 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 14
-
-
-=== PATCH 68 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 69 ===
-[!] Patch failed to apply:
-'charmap' codec can't encode characters in position 270-271: character maps to <undefined>
-
-
-=== PATCH 70 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 8
-
-
-=== PATCH 71 ===
-[!] Patch failed to apply:
-'charmap' codec can't encode characters in position 222-233: character maps to <undefined>
-
-
-=== PATCH 72 ===
-[!] Patch failed to apply:
-'charmap' codec can't encode characters in position 203-214: character maps to <undefined>
-
-
-=== PATCH 73 ===
-[!] Patch failed to apply:
-'charmap' codec can't encode characters in position 147-158: character maps to <undefined>
-
-
-=== PATCH 74 ===
-[!] Patch failed to apply:
-error: git diff header lacks filename information when removing 1 leading pathname component (line 3)
-
-
-=== PATCH 75 ===
-[!] Patch failed to apply:
-error: git diff header lacks filename information when removing 1 leading pathname component (line 3)
-
-
-=== PATCH 76 ===
-[!] Patch failed to apply:
-error: git diff header lacks filename information when removing 1 leading pathname component (line 3)
-
-
-=== PATCH 77 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 13
-
-
-=== PATCH 78 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 16
-
-
-=== PATCH 79 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 7
-
-
-=== PATCH 80 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 6
-
-
-=== PATCH 81 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 6
-
-
-=== PATCH 82 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 11
-
-
-=== PATCH 83 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 15
-
-
-=== PATCH 84 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 15
-
-
-=== PATCH 85 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 86 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 11
-
-
-=== PATCH 87 ===
-[!] Patch failed to apply:
-error: git diff header lacks filename information when removing 1 leading pathname component (line 3)
-
-
-=== PATCH 88 ===
-[!] Patch failed to apply:
-error: git diff header lacks filename information when removing 1 leading pathname component (line 3)
-
-
-=== PATCH 89 ===
-[!] Patch failed to apply:
-error: git diff header lacks filename information when removing 1 leading pathname component (line 3)
-
-
-=== PATCH 90 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 10
-
-
-=== PATCH 91 ===
-[!] Patch failed to apply:
-error: corrupt patch at line 15
-
-
-=== BUILD & RUN TESTS (C++) ===
-[!] Compilation failed:
-In file included from D:\semester5\ai-agent-project\cpp_project\puzzle-2\database.cpp:1:0:
-D:\semester5\ai-agent-project\cpp_project\puzzle-2\database.h:4:30: fatal error: QtSql/QSqlDatabase: No such file or directory
- #include <QtSql/QSqlDatabase>
-                              ^
-compilation terminated.
-In file included from D:\semester5\ai-agent-project\cpp_project\puzzle-2\databasemanager.h:4:0,
-                 from D:\semester5\ai-agent-project\cpp_project\puzzle-2\databasemanager.cpp:1:
-D:\semester5\ai-agent-project\cpp_project\puzzle-2\database.h:4:30: fatal error: QtSql/QSqlDatabase: No such file or directory
- #include <QtSql/QSqlDatabase>
-                              ^
-compilation terminated.
-In file included from D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle/databasemanager.h:4:0,
-                 from D:\semester5\ai-agent-project\cpp_project\puzzle-2\defaultpuzzlemenuwindow.h:5,
-                 from D:\semester5\ai-agent-project\cpp_project\puzzle-2\defaultpuzzlemenuwindow.cpp:1:
-D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle/database.h:4:30: fatal error: QtSql/QSqlDatabase: No such file or directory
- #include <QtSql/QSqlDatabase>
-                              ^
-compilation terminated.
-In file included from D:\semester5\ai-agent-project\cpp_project\puzzle-2\generatepuzzlemenuwindow.cpp:1:0:
-D:\semester5\ai-agent-project\cpp_project\puzzle-2\generatepuzzlemenuwindow.h:5:19: fatal error: QWidget: No such file or directory
- #include <QWidget>
-                   ^
-compilation terminated.
-In file included from D:\semester5\ai-agent-project\cpp_project\puzzle-2\databasemanager.h:4:0,
-                 from D:\semester5\ai-agent-project\cpp_project\puzzle-2\leaderboard.h:4,
-                 from D:\semester5\ai-agent-project\cpp_project\puzzle-2\leaderboard.cpp:1:
-D:\semester5\ai-agent-project\cpp_project\puzzle-2\database.h:4:30: fatal error: QtSql/QSqlDatabase: No such file or directory
- #include <QtSql/QSqlDatabase>
-                              ^
-compilation terminated.
-In file included from D:\semester5\ai-agent-project\cpp_project\puzzle-2\main.cpp:1:0:
-D:\semester5\ai-agent-project\cpp_project\puzzle-2\mainwindow.h:4:23: fatal error: QMainWindow: No such file or directory
- #include <QMainWindow>
-                       ^
-compilation terminated.
-In file included from D:\semester5\ai-agent-project\cpp_project\puzzle-2\mainwindow.cpp:2:0:
-D:\semester5\ai-agent-project\cpp_project\puzzle-2\mainwindow.h:4:23: fatal error: QMainWindow: No such file or directory
- #include <QMainWindow>
-                       ^
-compilation terminated.
-In file included from D:\semester5\ai-agent-project\cpp_project\puzzle-2\mainwindowpuzzle.cpp:1:0:
-D:\semester5\ai-agent-project\cpp_project\puzzle-2\mainwindowpuzzle.h:5:23: fatal error: QMainWindow: No such file or directory
- #include <QMainWindow>
-                       ^
-compilation terminated.
-In file included from D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle\database.cpp:1:0:
-D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle\database.h:4:30: fatal error: QtSql/QSqlDatabase: No such file or directory
- #include <QtSql/QSqlDatabase>
-                              ^
-compilation terminated.
-In file included from D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle\databasemanager.h:4:0,
-                 from D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle\databasemanager.cpp:1:
-D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle\database.h:4:30: fatal error: QtSql/QSqlDatabase: No such file or directory
- #include <QtSql/QSqlDatabase>
-                              ^
-compilation terminated.
-In file included from D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle\databasemanager.h:4:0,
-                 from D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle\leaderboard.h:4,
-                 from D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle\leaderboard.cpp:1:
-D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle\database.h:4:30: fatal error: QtSql/QSqlDatabase: No such file or directory
- #include <QtSql/QSqlDatabase>
-                              ^
-compilation terminated.
-In file included from D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle\pieceslist.cpp:1:0:
-D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle\pieceslist.h:4:23: fatal error: QListWidget: No such file or directory
- #include <QListWidget>
-                       ^
-compilation terminated.
-In file included from D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle\puzzlewidget.cpp:1:0:
-D:\semester5\ai-agent-project\cpp_project\puzzle-2\puzzle\puzzlewidget.h:4:18: fatal error: QPoint: No such file or directory
- #include <QPoint>
-                  ^
-compilation terminated.
-
+Date: 2025-10-04 17:34:28.458717
+
+[*] Applying patches to Python repo: D:\新建文件夹\School\project\Agent\python_repo
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_1.diff ...
+[+] Patch patch_1.diff applied successfully.
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_10.diff ...
+[+] Patch patch_10.diff applied successfully.
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_11.diff ...
+[+] Patch patch_11.diff applied successfully.
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_12.diff ...
+[+] Patch patch_12.diff applied successfully.
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_13.diff ...
+[+] Patch patch_13.diff applied successfully.
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_14.diff ...
+[+] Patch patch_14.diff applied successfully.
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_15.diff ...
+[+] Patch patch_15.diff applied successfully.
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_2.diff ...
+[+] Patch patch_2.diff applied successfully.
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_3.diff ...
+[+] Patch patch_3.diff applied successfully.
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_4.diff ...
+[+] Patch patch_4.diff applied successfully.
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_5.diff ...
+[+] Patch patch_5.diff applied successfully.
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_6.diff ...
+[+] Patch patch_6.diff applied successfully.
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_7.diff ...
+[+] Patch patch_7.diff applied successfully.
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_8.diff ...
+[+] Patch patch_8.diff applied successfully.
+
+[*] Applying D:\新建文件夹\School\project\Agent\agent\patches_py_fixed\patch_9.diff ...
+[+] Patch patch_9.diff applied successfully.
+[*] Testing puzzle_piece.close_enough ...
+    [!] Error running close_enough:
+Traceback (most recent call last):
+  File "D:\新建文件夹\School\project\Agent\agent\dynamic_tester.py", line 109, in run_py_bug_tests
+    spec.loader.exec_module(mod)
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "D:\新建文件夹\School\project\Agent\python_repo\puzzle-challenge\puzzle_piece.py", line 2, in <module>
+    import prepare
+  File "D:\新建文件夹\School\project\Agent\python_repo\puzzle-challenge\prepare.py", line 19, in <module>
+    GFX = tools.load_all_gfx(os.path.join("resources", "graphics"))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\新建文件夹\School\project\Agent\python_repo\puzzle-challenge\tools.py", line 34, in load_all_gfx
+    for pic in os.listdir(directory):
+               ^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [WinError 3] 系统找不到指定的路径。: 'resources\\graphics'
+
+[*] Testing labels.render_text ...
+    [!] Error running render_text:
+Traceback (most recent call last):
+  File "D:\新建文件夹\School\project\Agent\agent\dynamic_tester.py", line 109, in run_py_bug_tests
+    spec.loader.exec_module(mod)
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "D:\新建文件夹\School\project\Agent\python_repo\puzzle-challenge\labels.py", line 5, in <module>
+    import prepare, tools
+  File "D:\新建文件夹\School\project\Agent\python_repo\puzzle-challenge\prepare.py", line 19, in <module>
+    GFX = tools.load_all_gfx(os.path.join("resources", "graphics"))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\新建文件夹\School\project\Agent\python_repo\puzzle-challenge\tools.py", line 34, in load_all_gfx
+    for pic in os.listdir(directory):
+               ^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [WinError 3] 系统找不到指定的路径。: 'resources\\graphics'
+
+[*] Testing puzzle.get_event ...
+    [!] Error running get_event:
+Traceback (most recent call last):
+  File "D:\新建文件夹\School\project\Agent\agent\dynamic_tester.py", line 109, in run_py_bug_tests
+    spec.loader.exec_module(mod)
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "D:\新建文件夹\School\project\Agent\python_repo\puzzle-challenge\puzzle.py", line 3, in <module>
+    import prepare
+  File "D:\新建文件夹\School\project\Agent\python_repo\puzzle-challenge\prepare.py", line 19, in <module>
+    GFX = tools.load_all_gfx(os.path.join("resources", "graphics"))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\新建文件夹\School\project\Agent\python_repo\puzzle-challenge\tools.py", line 34, in load_all_gfx
+    for pic in os.listdir(directory):
+               ^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [WinError 3] 系统找不到指定的路径。: 'resources\\graphics'
