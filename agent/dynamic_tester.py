@@ -6,6 +6,7 @@ import argparse
 import importlib.util
 import sys
 import traceback
+import importlib
 
 # === Paths ===
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -14,12 +15,12 @@ CPP_REPO = BASE_DIR / "cpp_project" / "puzzle-2"
 PY_REPO = BASE_DIR / "python_repo"
 PUZZLE_CHALLENGE = PY_REPO / "puzzle-challenge"
 
-# Add puzzle-challenge to sys.path for imports
+# Add puzzle-challenge to sys.path
 sys.path.insert(0, str(PUZZLE_CHALLENGE))
 
 # === Helper Functions ===
 def run_command(cmd, cwd=None, input_text=None):
-    """Run shell command, optionally with stdin text."""
+    """Run shell command with optional stdin and return success + output."""
     try:
         result = subprocess.run(
             cmd,
@@ -35,11 +36,7 @@ def run_command(cmd, cwd=None, input_text=None):
 
 # === PATCH HANDLER ===
 def apply_patches_from_dir(target_repo, patch_dir):
-    """Apply patches and return structured results list.
-
-    Returns: list of dict {name, status, detail}
-    status is 'SUCCESS' or 'FAILED'
-    """
+    """Apply patches and return list of dict results {name, status, detail}"""
     results = []
     patch_files = sorted(patch_dir.glob("patch_*.diff"))
     if not patch_files:
@@ -57,10 +54,19 @@ def apply_patches_from_dir(target_repo, patch_dir):
         if success:
             results.append({"name": name, "status": "SUCCESS", "detail": ""})
         else:
-            # try to extract a short reason
             reason = output.strip().splitlines()[0] if output else "unknown error"
-            results.append({"name": name, "status": "FAILED", "detail": reason})
-
+            fb_reason = None
+            for fb in ["--unidiff-zero", "--reject"]:
+                fb_cmd = f"git apply {fb} -"
+                fb_success, fb_output = run_command(fb_cmd, cwd=target_repo, input_text=patch_text)
+                if fb_success:
+                    results.append({"name": name, "status": "SUCCESS", "detail": f"applied with {fb}"})
+                    fb_reason = None
+                    break
+                else:
+                    fb_reason = fb_output.strip().splitlines()[0] if fb_output else fb_reason
+            if fb_reason is not None:
+                results.append({"name": name, "status": "FAILED", "detail": fb_reason})
     return results
 
 # === C++ TESTER ===
@@ -75,7 +81,6 @@ def run_cpp_tests(report_lines):
         f"g++ -std=c++17 -Wall -Wextra -fsanitize=address -o {exe_name} "
         + " ".join(str(f) for f in cpp_files)
     )
-
     success, output = run_command(compile_cmd, cwd=CPP_REPO)
     report_lines.append("\n=== BUILD & RUN TESTS (C++) ===")
     if not success:
@@ -95,18 +100,14 @@ def ensure_mock_resources():
         path = PUZZLE_CHALLENGE / "resources" / folder
         path.mkdir(parents=True, exist_ok=True)
 
-# === PYTHON TESTER ===
+# === PYTHON BUG TESTS ===
 def run_py_bug_tests():
-    """Run python bug checks and return a list of test result dicts:
-    {test, status, detail}
-    status: PASS or FAIL
-    """
+    """Re-run known bug tests to verify fixes."""
     bug_snippets = [
         ("puzzle_piece", "close_enough"),
         ("labels", "render_text"),
         ("puzzle", "get_event"),
     ]
-
     results = []
     ensure_mock_resources()
 
@@ -119,7 +120,6 @@ def run_py_bug_tests():
             sys.modules[module_name] = mod
             spec.loader.exec_module(mod)
 
-            # check module-level
             func = getattr(mod, func_name, None)
             if callable(func):
                 if func_name == "close_enough":
@@ -133,9 +133,8 @@ def run_py_bug_tests():
                     except Exception:
                         results.append({"test": test_name, "status": "FAIL", "detail": traceback.format_exc()})
                 else:
-                    results.append({"test": test_name, "status": "PASS", "detail": "module-level function present"})
+                    results.append({"test": test_name, "status": "PASS", "detail": "function callable"})
             else:
-                # search classes
                 found = False
                 for name, obj in list(vars(mod).items()):
                     if isinstance(obj, type) and hasattr(obj, func_name):
@@ -146,7 +145,20 @@ def run_py_bug_tests():
                     results.append({"test": test_name, "status": "FAIL", "detail": f"{func_name} not found"})
         except Exception:
             results.append({"test": test_name, "status": "FAIL", "detail": traceback.format_exc()})
+    return results
 
+# === RUN ALL TESTS (Pytest) ===
+def run_full_regression_tests():
+    """Run pytest across the repo to detect new regressions."""
+    if not (PY_REPO / "tests").exists():
+        return []
+
+    success, output = run_command("pytest -q --tb=short", cwd=PY_REPO)
+    results = []
+    if success:
+        results.append({"test": "pytest_suite", "status": "PASS", "detail": "All tests passed"})
+    else:
+        results.append({"test": "pytest_suite", "status": "FAIL", "detail": output})
     return results
 
 # === MAIN ===
@@ -160,22 +172,16 @@ def main():
     patches_cpp = agent_dir / "patches" / "patches_cpp_fixed"
     patches_py = agent_dir / "patches_py_fixed"
 
-    # Build structured results
-    patch_results = []
-    test_results = []
+    patch_results, test_results = [], []
 
     if args.cpp:
         patch_results = apply_patches_from_dir(CPP_REPO, patches_cpp)
-        # For C++ we still run compile/tests for now
         run_cpp_tests([])
     elif args.py:
         patch_results = apply_patches_from_dir(PY_REPO, patches_py)
         test_results = run_py_bug_tests()
-    else:
-        # nothing requested
-        pass
+        test_results += run_full_regression_tests()
 
-    # Format report according to the user's desired template
     lines = []
     lines.append("# Dynamic Analysis Report")
     lines.append(f"Date: {datetime.now().date()}")
@@ -194,17 +200,15 @@ def main():
             lines.append(f"[+] {t['test']} ... PASS")
         else:
             lines.append(f"[-] {t['test']} ... FAIL")
-            # indent detail lines
             for dl in str(t['detail']).splitlines():
                 lines.append(f"    {dl}")
 
-    # Summary
     total_patches = len(patch_results)
     applied = sum(1 for p in patch_results if p["status"] == "SUCCESS")
     total_tests = len(test_results)
     passed_tests = sum(1 for t in test_results if t["status"] == "PASS")
     remaining = total_tests - passed_tests
-    new_issues = 0
+    new_issues = sum(1 for t in test_results if t["status"] == "FAIL")
 
     lines.append("")
     lines.append("== SUMMARY ==")
@@ -219,4 +223,15 @@ def main():
     print(f"\n[+] Report saved to {REPORT_FILE}")
 
 if __name__ == "__main__":
+    if "--py" in sys.argv and os.environ.get("DYNAMIC_TESTER_RELAUNCHED") != "1":
+        try:
+            if importlib.util.find_spec("pygame") is None:
+                env = os.environ.copy()
+                env["DYNAMIC_TESTER_RELAUNCHED"] = "1"
+                cmd = ["py", "-3", "-u", sys.argv[0]] + sys.argv[1:]
+                print("[Debug] pygame not found. Relaunching with:", " ".join(cmd))
+                rc = subprocess.run(cmd, env=env).returncode
+                sys.exit(rc)
+        except Exception:
+            pass
     main()

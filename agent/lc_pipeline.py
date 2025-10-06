@@ -352,6 +352,64 @@ def sanitize_patch(raw_patch: str) -> str:
 
     return "\n".join(clean_lines).strip()
 
+
+def count_static_issues(report_path: Path) -> int:
+    """Count linter-style issues in the static analysis report file.
+
+    We look for lines that match the pylint/flake8 style: path:line:col: CODE: message
+    """
+    import re as _re
+    if not report_path.exists():
+        return -1
+    text = report_path.read_text(encoding="utf-8")
+    # Match patterns like "file.py:12:8: E1101: ..." or "file.py:12: E0606: ..."
+    matches = _re.findall(r"^.+?:\d+:\d+:\s+[A-Z]\d{4}:", text, flags=_re.MULTILINE)
+    if not matches:
+        # fallback: some tools may emit file:line:code style without column
+        matches = _re.findall(r"^.+?:\d+:\s+[A-Z]\d{4}:", text, flags=_re.MULTILINE)
+    return len(matches)
+
+
+def run_iterative_fix_py(max_iters: int = 5):
+    """Run an iterative loop: static analysis -> generate patches -> apply via dynamic tests -> repeat.
+
+    Stops when static issue count reaches 0 or when issues don't decrease between iterations.
+    """
+    print("[*] Starting iterative auto-fix loop for Python")
+    prev_issues = None
+    for iteration in range(1, max_iters + 1):
+        print(f"\n=== Iteration {iteration}/{max_iters} ===")
+
+        # 1) Run static analyzer (use py -3 to pick correct interpreter)
+        print("[*] Running static analyzer (py)")
+        subprocess.run("py -3 -u agent/analyzer_py.py", shell=True, check=False, cwd=BASE_DIR)
+
+        issues = count_static_issues(REPORT_PY)
+        print(f"[*] Static issues found: {issues}")
+
+        if issues == 0:
+            print("[+] No static issues remain. Auto-fix complete.")
+            return True
+
+        if prev_issues is not None and issues >= prev_issues:
+            print("[!] Static issue count did not decrease this iteration. Aborting to avoid loop.")
+            return False
+
+        prev_issues = issues
+
+        # 2) Generate candidate patches for Python snippets
+        print("[*] Generating candidate patches (LLM)")
+        # This will produce sanitized patches into agent/patches/patches_py
+        run_pipeline(REPORT_PY, SNIPPETS_PY, lang="py")
+
+        # 3) Run dynamic tester which will attempt to apply patches and run runtime tests
+        print("[*] Running dynamic tester to apply patches and test runtime behavior")
+        subprocess.run("py -3 -u agent/dynamic_tester.py --py", shell=True, check=False, cwd=BASE_DIR)
+
+        # 4) Re-run static analyzer next loop to measure improvement
+    print("[!] Reached max iterations without fully resolving static issues.")
+    return False
+
 # === AI-powered Intent classifier ===  
 INTENT_PROMPT = """
 You are an AI intent classifier for a software engineering agent.
@@ -431,6 +489,9 @@ def interpret_command(user_input: str):
         run_command("python dynamic_tester.py --cpp", cwd=BASE_DIR)
     elif intent == "dynamic_py":
         run_command("python dynamic_tester.py --py", cwd=BASE_DIR)
+    elif user_input.strip().lower() == "auto_fix_py":
+        # Special non-LLM keyword to run the iterative auto-fix loop for Python
+        run_iterative_fix_py(max_iters=5)
     elif intent == "exit":
         print("Goodbye!")
         return False
@@ -470,6 +531,67 @@ if __name__ == "__main__":
 
     if args.cmd:
         # Run a single command non-interactively and exit
-        interpret_command(args.cmd)
+        if args.cmd.strip().lower() == "auto_fix_py":
+            run_iterative_fix_py(max_iters=10)
+        else:
+            interpret_command(args.cmd)
     else:
         main()
+
+
+def count_static_issues(report_path: Path) -> int:
+    """Count linter-style issues in the static analysis report file.
+
+    We look for lines that match the pylint/flake8 style: path:line:col: CODE: message
+    """
+    import re as _re
+    if not report_path.exists():
+        return -1
+    text = report_path.read_text(encoding="utf-8")
+    # Match patterns like "file.py:12:8: E1101: ..." or "file.py:12: E0606: ..."
+    matches = _re.findall(r"^.+?:\d+:\d+:\s+[A-Z]\d{4}:", text, flags=_re.MULTILINE)
+    if not matches:
+        # fallback: some tools may emit file:line:code style without column
+        matches = _re.findall(r"^.+?:\d+:\s+[A-Z]\d{4}:", text, flags=_re.MULTILINE)
+    return len(matches)
+
+
+def run_iterative_fix_py(max_iters: int = 5):
+    """Run an iterative loop: static analysis -> generate patches -> apply via dynamic tests -> repeat.
+
+    Stops when static issue count reaches 0 or when issues don't decrease between iterations.
+    """
+    print("[*] Starting iterative auto-fix loop for Python")
+    prev_issues = None
+    for iteration in range(1, max_iters + 1):
+        print(f"\n=== Iteration {iteration}/{max_iters} ===")
+
+        # 1) Run static analyzer (use py -3 to pick correct interpreter)
+        print("[*] Running static analyzer (py)")
+        subprocess.run("py -3 -u agent/analyzer_py.py", shell=True, check=False, cwd=BASE_DIR)
+
+        issues = count_static_issues(REPORT_PY)
+        print(f"[*] Static issues found: {issues}")
+
+        if issues == 0:
+            print("[+] No static issues remain. Auto-fix complete.")
+            return True
+
+        if prev_issues is not None and issues >= prev_issues:
+            print("[!] Static issue count did not decrease this iteration. Aborting to avoid loop.")
+            return False
+
+        prev_issues = issues
+
+        # 2) Generate candidate patches for Python snippets
+        print("[*] Generating candidate patches (LLM)")
+        # This will produce sanitized patches into agent/patches/patches_py
+        run_pipeline(REPORT_PY, SNIPPETS_PY, lang="py")
+
+        # 3) Run dynamic tester which will attempt to apply patches and run runtime tests
+        print("[*] Running dynamic tester to apply patches and test runtime behavior")
+        subprocess.run("py -3 -u agent/dynamic_tester.py --py", shell=True, check=False, cwd=BASE_DIR)
+
+        # 4) Re-run static analyzer next loop to measure improvement
+    print("[!] Reached max iterations without fully resolving static issues.")
+    return False

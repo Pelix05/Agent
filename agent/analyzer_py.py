@@ -10,28 +10,37 @@ SNIPPET_FILE.parent.mkdir(exist_ok=True)
 
 def run_command(cmd, cwd=None):
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd)
-    return result.stdout + result.stderr
+    return result.returncode, result.stdout + result.stderr
 
 
 def analyze_python():
     python_repo = BASE_DIR / "python_repo"
     print("[*] Running Python analysis (pylint + flake8 + bandit)...")
+    # Prefer to run linters with the Windows Python launcher 'py -3' when available
+    # so the same interpreter that has pygame gets used by the linters.
+    launcher = "python -m"
+    ret, _ = run_command("py -3 -c \"import sys\"", cwd=BASE_DIR)
+    if ret == 0:
+        launcher = "py -3 -m"
 
     # pylint: only errors and fatal (disable refactor, convention, warning)
-    output1 = run_command(
-        "pylint --disable=R,C,W --enable=E,F --score=n --exit-zero --recursive=y .",
-        cwd=python_repo,
-    )
+    # Disable E1101 (no-member) globally for this analysis run to avoid false
+    # positives coming from pygame's C extension members which static
+    # analyzers can't always introspect.
+    # Note: don't use --enable to avoid re-enabling E1101; rely on defaults and
+    # explicitly disable noisy rules instead.
+    cmd1 = f"{launcher} pylint --disable=R,C,W,E1101 --score=n --exit-zero --recursive=y ."
+    ret1, output1 = run_command(cmd1, cwd=python_repo)
 
     # flake8: focus on syntax error, undefined name, unused import
-    output2 = run_command(
-        "flake8 --select=E9,F63,F7,F82 --show-source --statistics .",
-        cwd=python_repo,
-    )
+    cmd2 = f"{launcher} flake8 --select=E9,F63,F7,F82 --show-source --statistics ."
+    ret2, output2 = run_command(cmd2, cwd=python_repo)
 
     # bandit: security issue
-    output3 = run_command("bandit -r .", cwd=python_repo)
+    cmd3 = f"{launcher} bandit -r ."
+    ret3, output3 = run_command(cmd3, cwd=python_repo)
 
+    # Combine outputs
     return output1 + "\n" + output2 + "\n" + output3
 
 
