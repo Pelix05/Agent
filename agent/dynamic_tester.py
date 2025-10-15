@@ -70,29 +70,31 @@ def apply_patches_from_dir(target_repo, patch_dir):
     return results
 
 # === C++ TESTER ===
-def run_cpp_tests(report_lines):
+def run_cpp_tests():
+    """Compile and run C++ files, return structured test results."""
     cpp_files = list(CPP_REPO.rglob("*.cpp"))
+    results = []
+
     if not cpp_files:
-        report_lines.append("[!] No C++ files found to compile.")
-        return
+        results.append({"test": "C++ compile/run", "status": "FAIL", "detail": "No C++ files found"})
+        return results
 
     exe_name = "main.exe" if os.name == "nt" else "main"
-    compile_cmd = (
-        f"g++ -std=c++17 -Wall -Wextra -fsanitize=address -o {exe_name} "
-        + " ".join(str(f) for f in cpp_files)
-    )
+    compile_cmd = f"g++ -std=c++17 -Wall -Wextra -fsanitize=address -o {exe_name} " + " ".join(str(f) for f in cpp_files)
     success, output = run_command(compile_cmd, cwd=CPP_REPO)
-    report_lines.append("\n=== BUILD & RUN TESTS (C++) ===")
+
     if not success:
-        report_lines.append(f"[!] Compilation failed:\n{output}")
-        return
+        results.append({"test": "C++ compile", "status": "FAIL", "detail": output})
+        return results
 
     run_cmd = exe_name if os.name == "nt" else f"./{exe_name}"
     success, output = run_command(run_cmd, cwd=CPP_REPO)
     if not success:
-        report_lines.append(f"[!] Runtime failed:\n{output}")
+        results.append({"test": "C++ runtime", "status": "FAIL", "detail": output})
     else:
-        report_lines.append(f"[+] Program executed successfully:\n{output}")
+        results.append({"test": "C++ runtime", "status": "PASS", "detail": output})
+
+    return results
 
 # === MOCK RESOURCES ===
 def ensure_mock_resources():
@@ -126,10 +128,7 @@ def run_py_bug_tests():
                     try:
                         result = func(10, 15)
                         ok = bool(result)
-                        if ok:
-                            results.append({"test": test_name, "status": "PASS", "detail": f"returned {result}"})
-                        else:
-                            results.append({"test": test_name, "status": "FAIL", "detail": f"returned {result}"})
+                        results.append({"test": test_name, "status": "PASS" if ok else "FAIL", "detail": f"returned {result}"})
                     except Exception:
                         results.append({"test": test_name, "status": "FAIL", "detail": traceback.format_exc()})
                 else:
@@ -147,7 +146,7 @@ def run_py_bug_tests():
             results.append({"test": test_name, "status": "FAIL", "detail": traceback.format_exc()})
     return results
 
-# === RUN ALL TESTS (Pytest) ===
+# === RUN ALL PYTESTS ===
 def run_full_regression_tests():
     """Run pytest across the repo to detect new regressions."""
     if not (PY_REPO / "tests").exists():
@@ -176,12 +175,13 @@ def main():
 
     if args.cpp:
         patch_results = apply_patches_from_dir(CPP_REPO, patches_cpp)
-        run_cpp_tests([])
+        test_results = run_cpp_tests()
     elif args.py:
         patch_results = apply_patches_from_dir(PY_REPO, patches_py)
         test_results = run_py_bug_tests()
         test_results += run_full_regression_tests()
 
+    # --- Build Report ---
     lines = []
     lines.append("# Dynamic Analysis Report")
     lines.append(f"Date: {datetime.now().date()}")
@@ -222,6 +222,7 @@ def main():
     print(final_report)
     print(f"\n[+] Report saved to {REPORT_FILE}")
 
+# === RELAUNCH FOR PYGAME ===
 if __name__ == "__main__":
     if "--py" in sys.argv and os.environ.get("DYNAMIC_TESTER_RELAUNCHED") != "1":
         try:
