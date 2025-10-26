@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import zipfile
 import tempfile
-from lc_pipeline import run_iterative_fix_py, run_pipeline, REPORT_PY, SNIPPETS_PY, run_command  # fixed import
+from lc_pipeline import run_iterative_fix_py, run_pipeline, REPORT_PY, SNIPPETS_PY  # your pipeline imports
 
 app = Flask(__name__)
 
@@ -28,11 +28,13 @@ def run_command(cmd, cwd=None):
 
 def run_static_analysis_py():
     """Run static analysis (example: pylint, bandit)."""
-    return run_command("python agent/analyzer_py.py")
+    # Make sure cwd points to agent folder if analyzer_py.py lives there
+    return run_command("python analyzer_py.py", cwd="agent")
 
 
 def run_dynamic_py():
     """Run dynamic tests for Python."""
+    # Make sure cwd points to agent folder where dynamic_tester.py lives
     return run_command("python dynamic_tester.py --py", cwd="agent")
 
 
@@ -46,8 +48,10 @@ def run_auto_fix_py():
     return run_iterative_fix_py(max_iters=5)
 
 
+# === File Upload Handler ===
+
 def handle_file_upload(file):
-    """Handle zip file upload, extract, and run both static and dynamic analysis."""
+    """Handle ZIP file upload, extract, and run both static and dynamic analysis."""
     global file_uploaded, uploaded_python_files
     try:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -61,7 +65,7 @@ def handle_file_upload(file):
             else:
                 return "[Error] The uploaded file is not a valid ZIP file."
 
-            # Find all Python files
+            # Find Python files
             python_files = [f for f in Path(tmpdir).rglob("*.py")]
             if not python_files:
                 return "No Python files found in the uploaded zip."
@@ -69,20 +73,18 @@ def handle_file_upload(file):
             file_uploaded = True
             uploaded_python_files = python_files
 
-            # --- Run static analysis ---
-            static_results = []
+            # --- Run Static Analysis ---
+            static_results = ["=== STATIC ANALYSIS ==="]
             for py_file in python_files:
                 static_results.append(f"\n--- Static Analysis for {py_file.name} ---\n")
                 static_results.append(run_static_analysis_py())
 
-            # --- Run dynamic analysis immediately ---
-            dynamic_results = []
-            dynamic_results.append("\n=== Dynamic Analysis ===\n")
+            # --- Run Dynamic Analysis immediately ---
+            dynamic_results = ["\n=== DYNAMIC ANALYSIS ===\n"]
             dynamic_results.append(run_dynamic_py())
 
             # Combine all results
-            combined_results = "\n".join(static_results + dynamic_results)
-            return combined_results
+            return "\n".join(static_results + dynamic_results)
 
     except Exception as e:
         return f"[Error] Upload failed: {str(e)}"

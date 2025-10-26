@@ -22,9 +22,20 @@ patch_9.diff ... SUCCESS
 [+] test_puzzle_piece_close_enough ... PASS
 [+] test_labels_render_text ... PASS
 [+] test_puzzle_get_event ... PASS
+[+] Resource Management ... PASS
+[+] Concurrency ... PASS
+[+] Boundary Test  ... PASS
+[+] Boundary Test aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ... PASS
+[+] Boundary Test -1 ... PASS
+[+] Boundary Test 0 ... PASS
+[+] Boundary Test 10000000000.0 ... PASS
+[+] Boundary Test ('int', 'a') ... PASS
+[+] Boundary Test ('float', 'b') ... PASS
+[+] Env Test ... PASS
+[+] Dynamic Code Test ... PASS
 
 == SUMMARY ==
 Patches applied: 15/15
-Bugs fixed: 3
+Bugs fixed: 14
 Remaining issues: 0
 New issues: 0

@@ -1,206 +1,303 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Debug Agent</title>
-  <style>
-    body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      background-color: #f5f5f5;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 30px;
-    }
-    h1 {
-      color: #1976d2;
-      margin-bottom: 10px;
-    }
-    #chat-box {
-      width: 90%;
-      max-width: 800px;
-      height: 500px;
-      background-color: #fff;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      padding: 20px;
-      overflow-y: auto;
-    }
-    .message {
-      padding: 10px 15px;
-      margin: 10px 0;
-      border-radius: 8px;
-      white-space: pre-wrap;
-    }
-    .user-message {
-      background-color: #e3f2fd;
-      align-self: flex-end;
-    }
-    .agent-message {
-      background-color: #e8f5e9;
-    }
-    #input-area {
-      display: flex;
-      width: 90%;
-      max-width: 800px;
-      margin-top: 20px;
-    }
-    #commandInput {
-      flex: 1;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    #sendBtn {
-      padding: 10px 20px;
-      margin-left: 10px;
-      background-color: #2196f3;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #sendBtn:hover {
-      background-color: #1976d2;
-    }
-    #fileInput {
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    #uploadBtn, #runBtn {
-      padding: 10px 20px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    #uploadBtn:hover, #runBtn:hover {
-      background-color: #45a049;
-    }
-    #actionSelect {
-      margin-top: 10px;
-      padding: 8px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Python Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f7d1ff, #d1e7ff);
+}
+
+.container {
+    background: #b998f2;
+    padding: 50px;
+    border-radius: 24px;
+    width: 95%;
+    max-width: 950px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: max-height 0.5s ease;
+    max-height: 700px;
+    overflow: hidden; /* Keeps the rounded look even when inner content scrolls */
+}
+
+h1 {
+    font-weight: 700;
+    font-size: 34px;
+    color: #33296d;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.footer {
+    margin-top: 25px;
+    text-align: center;
+    color: #33296d;
+    font-size: 15px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    align-items: center;
+    width: 100%;
+}
+
+.file-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    max-width: 600px;
+    border: 2px dashed #33296d;
+    border-radius: 12px;
+    padding: 12px;
+    transition: background 0.3s, border-color 0.3s;
+}
+.file-container.dragover {
+    background: rgba(255,255,255,0.05);
+    border-color: #659ee0;
+}
+
+#fileInput { display: none; }
+
+.file-label {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #f7d1ff, #d1e7ff);
+    color: #33296d;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    text-align: center;
+    font-size: 14px;
+    min-width: 120px;
+}
+.file-label:hover { transform: scale(1.05); }
+
+#fileName {
+    flex: 1;
+    padding: 10px 15px;
+    background: linear-gradient(135deg, #f7d1ff, #d1e7ff);
+    color: #33296d;
+    border-radius: 12px;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+button {
+    padding: 14px 25px;
+    background: linear-gradient(135deg, #f7d1ff, #d1e7ff);
+    color: #33296d;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+    font-size: 15px;
+}
+button:hover { transform: scale(1.05); }
+
+#progressContainer {
+    width: 100%;
+    max-width: 600px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    height: 16px;
+    display: none;
+    margin-top: 15px;
+    position: relative;
+}
+#progressBar {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(135deg, #d1e7ff, #f7d1ff);
+    transition: width 0.3s;
+}
+#progressPercent {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    font-weight: 600;
+    color: #33296d;
+}
+
+#result {
+    margin-top: 35px;
+    padding: 30px;
+    background: linear-gradient(135deg, #f7d1ff, #d1e7ff);
+    border-radius: 20px;
+    max-height: 250px;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: auto; /* enable both scroll directions */
+    font-family: monospace;
+    white-space: pre-wrap;
+    box-shadow: inset 0 4px 12px rgba(0,0,0,0.15);
+    color: #33296d;
+    font-size: 15px;
+    transition: max-height 0.5s ease;
+    scrollbar-color: #b998f2 #e8d8ff;
+    scrollbar-width: thin;
+}
+
+/* ==== Custom Scrollbar (Modern Purple Theme) ==== */
+#result::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+#result::-webkit-scrollbar-track {
+    background: #e8d8ff;
+    border-radius: 10px;
+}
+#result::-webkit-scrollbar-thumb {
+    background: #b998f2;
+    border-radius: 10px;
+    transition: background 0.3s;
+}
+#result::-webkit-scrollbar-thumb:hover {
+    background: #9a7de6;
+}
+
+/* Animated "Thinking..." text */
+.thinking {
+    text-align: left;
+    font-weight: 600;
+    font-size: 16px;
+    color: #33296d;
+    display: flex;
+    align-items: center;
+    animation: pulse 1.5s infinite;
+    padding-left: 10px;
+}
+@keyframes pulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
+
+.pass { color: #0f7a0f; font-weight: 600; }
+.fail { color: #bf1f1f; font-weight: 600; }
+.warning { color: #b58b1f; font-weight: 600; }
+</style>
 </head>
 <body>
-  <h1>AI Debug Agent</h1>
+<div class="container" id="container">
+    <h1>Code Analyzer</h1>
+    <form id="uploadForm">
+        <div class="file-container" id="dropArea">
+            <label class="file-label" for="fileInput">Choose ZIP</label>
+            <input type="file" name="file" id="fileInput" accept=".zip" required>
+            <div id="fileName">No file selected</div>
+        </div>
+        <div id="progressContainer">
+            <div id="progressBar"></div>
+            <div id="progressPercent">0%</div>
+        </div>
+        <button type="submit">Upload & Analyze</button>
+    </form>
+    <div id="result">Analysis results will appear here...</div>
+    <div class="footer">Powered by BlackHole Group</div>
+</div>
 
-  <div id="chat-box"></div>
+<script>
+const fileInput = document.getElementById('fileInput');
+const fileName = document.getElementById('fileName');
+const dropArea = document.getElementById('dropArea');
+const progressContainer = document.getElementById('progressContainer');
+const progressBar = document.getElementById('progressBar');
+const progressPercent = document.getElementById('progressPercent');
+const resultDiv = document.getElementById('result');
+const container = document.getElementById('container');
 
-  <div id="input-area">
-    <input type="text" id="commandInput" placeholder="Enter command (e.g., 'hello' or 'static py')">
-    <button id="sendBtn">Send</button>
-  </div>
+fileInput.addEventListener('change', () => {
+    fileName.textContent = fileInput.files.length ? fileInput.files[0].name : "No file selected";
+});
 
-  <!-- File upload + Action control -->
-  <div id="fileInput">
-    <input type="file" id="file" name="file" accept=".zip" />
-    <button id="uploadBtn">Upload Zip File</button>
-
-    <select id="actionSelect">
-      <option value="static py">Static Analysis</option>
-      <option value="dynamic py">Dynamic Test</option>
-      <option value="patch py">Generate Patch</option>
-    </select>
-    <button id="runBtn">Run Analysis</button>
-  </div>
-
-  <script>
-    const chatBox = document.getElementById("chat-box");
-    const commandInput = document.getElementById("commandInput");
-    const sendBtn = document.getElementById("sendBtn");
-    const fileInput = document.getElementById("file");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const runBtn = document.getElementById("runBtn");
-    const actionSelect = document.getElementById("actionSelect");
-
-    // Helper: append message to chat
-    function addMessage(content, type = "agent") {
-      const div = document.createElement("div");
-      div.className = `message ${type}-message`;
-      div.innerText = content;
-      chatBox.appendChild(div);
-      chatBox.scrollTop = chatBox.scrollHeight;
+dropArea.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropArea.classList.add('dragover');
+});
+dropArea.addEventListener('dragleave', () => dropArea.classList.remove('dragover'));
+dropArea.addEventListener('drop', e => {
+    e.preventDefault();
+    dropArea.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length) {
+        fileInput.files = files;
+        fileName.textContent = files[0].name;
     }
+});
 
-    // === Handle "Send" text commands ===
-    sendBtn.addEventListener("click", async () => {
-      const command = commandInput.value.trim();
-      if (!command) return;
+document.getElementById('uploadForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!fileInput.files.length) return;
 
-      addMessage(command, "user");
-      commandInput.value = "";
+    container.style.maxHeight = '900px';
+    resultDiv.style.maxHeight = '500px';
+    resultDiv.innerHTML = '<div class="thinking">Thinking<span class="dots"></span></div>';
 
-      try {
-        const response = await fetch("/process", {
-          method: "POST",
-          body: new URLSearchParams({ command }),
-          headers: { "Content-Type": "application/x-www-form-urlencoded" }
-        });
-        const data = await response.json();
-        addMessage(data.result || data.error || "No response");
-      } catch (error) {
-        addMessage("Error: " + error);
-      }
-    });
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
 
-    // === Handle file upload ===
-    uploadBtn.addEventListener("click", async () => {
-      const file = fileInput.files[0];
-      if (!file) {
-        alert("Please select a ZIP file to upload.");
-        return;
-      }
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '0';
+    progressPercent.textContent = '0%';
 
-      const formData = new FormData();
-      formData.append("file", file);
-      addMessage("Uploading and analyzing file...", "agent");
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress = Math.min(progress + 5, 95);
+        progressBar.style.width = progress + '%';
+        progressPercent.textContent = progress + '%';
+    }, 100);
 
-      try {
-        const response = await fetch("/upload", { method: "POST", body: formData });
+    const dots = document.querySelector('.dots');
+    let dotCount = 0;
+    const dotsInterval = setInterval(() => {
+        dotCount = (dotCount + 1) % 4;
+        dots.textContent = '.'.repeat(dotCount);
+    }, 400);
+
+    try {
+        const response = await fetch('/upload', { method: 'POST', body: formData });
+        clearInterval(interval);
+        clearInterval(dotsInterval);
+        progressBar.style.width = '100%';
+        progressPercent.textContent = '100%';
+        progressContainer.style.display = 'none';
+
         const data = await response.json();
         if (data.status === "Success") {
-          addMessage("✅ File uploaded and analyzed successfully!");
-          addMessage(data.result);
+            const highlighted = data.result
+                .replace(/PASS/g, '<span class="pass">PASS</span>')
+                .replace(/FAIL/g, '<span class="fail">FAIL</span>')
+                .replace(/WARNING/g, '<span class="warning">WARNING</span>');
+            resultDiv.innerHTML = highlighted;
         } else {
-          addMessage("❌ Error: " + data.error);
+            resultDiv.textContent = "❌ Error: " + data.error;
         }
-      } catch (error) {
-        addMessage("Error: " + error);
-      }
-    });
-
-    // === Run selected operation ===
-    runBtn.addEventListener("click", async () => {
-      const selectedAction = actionSelect.value;
-      if (!selectedAction) {
-        alert("Please select an action first.");
-        return;
-      }
-
-      addMessage(`Running: ${selectedAction}`, "user");
-
-      try {
-        const response = await fetch("/process", {
-          method: "POST",
-          body: new URLSearchParams({ command: selectedAction }),
-          headers: { "Content-Type": "application/x-www-form-urlencoded" }
-        });
-        const data = await response.json();
-        addMessage(data.result || data.error || "No response from server");
-      } catch (error) {
-        addMessage("Error: " + error);
-      }
-    });
-  </script>
+    } catch (err) {
+        clearInterval(interval);
+        clearInterval(dotsInterval);
+        progressContainer.style.display = 'none';
+        resultDiv.textContent = "❌ Request failed: " + err;
+    }
+});
+</script>
 </body>
 </html>
