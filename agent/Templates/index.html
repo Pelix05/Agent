@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Debug Agent</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background-color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px;
+    }
+    h1 {
+      color: #1976d2;
+      margin-bottom: 10px;
+    }
+    #chat-box {
+      width: 90%;
+      max-width: 800px;
+      height: 500px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .message {
+      padding: 10px 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
+    .user-message {
+      background-color: #e3f2fd;
+      align-self: flex-end;
+    }
+    .agent-message {
+      background-color: #e8f5e9;
+    }
+    #input-area {
+      display: flex;
+      width: 90%;
+      max-width: 800px;
+      margin-top: 20px;
+    }
+    #commandInput {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    #sendBtn {
+      padding: 10px 20px;
+      margin-left: 10px;
+      background-color: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #sendBtn:hover {
+      background-color: #1976d2;
+    }
+    #fileInput {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #uploadBtn, #runBtn {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    #uploadBtn:hover, #runBtn:hover {
+      background-color: #45a049;
+    }
+    #actionSelect {
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>AI Debug Agent</h1>
+
+  <div id="chat-box"></div>
+
+  <div id="input-area">
+    <input type="text" id="commandInput" placeholder="Enter command (e.g., 'hello' or 'static py')">
+    <button id="sendBtn">Send</button>
+  </div>
+
+  <!-- File upload + Action control -->
+  <div id="fileInput">
+    <input type="file" id="file" name="file" accept=".zip" />
+    <button id="uploadBtn">Upload Zip File</button>
+
+    <select id="actionSelect">
+      <option value="static py">Static Analysis</option>
+      <option value="dynamic py">Dynamic Test</option>
+      <option value="patch py">Generate Patch</option>
+    </select>
+    <button id="runBtn">Run Analysis</button>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chat-box");
+    const commandInput = document.getElementById("commandInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const fileInput = document.getElementById("file");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const runBtn = document.getElementById("runBtn");
+    const actionSelect = document.getElementById("actionSelect");
+
+    // Helper: append message to chat
+    function addMessage(content, type = "agent") {
+      const div = document.createElement("div");
+      div.className = `message ${type}-message`;
+      div.innerText = content;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // === Handle "Send" text commands ===
+    sendBtn.addEventListener("click", async () => {
+      const command = commandInput.value.trim();
+      if (!command) return;
+
+      addMessage(command, "user");
+      commandInput.value = "";
+
+      try {
+        const response = await fetch("/process", {
+          method: "POST",
+          body: new URLSearchParams({ command }),
+          headers: { "Content-Type": "application/x-www-form-urlencoded" }
+        });
+        const data = await response.json();
+        addMessage(data.result || data.error || "No response");
+      } catch (error) {
+        addMessage("Error: " + error);
+      }
+    });
+
+    // === Handle file upload ===
+    uploadBtn.addEventListener("click", async () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        alert("Please select a ZIP file to upload.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      addMessage("Uploading and analyzing file...", "agent");
+
+      try {
+        const response = await fetch("/upload", { method: "POST", body: formData });
+        const data = await response.json();
+        if (data.status === "Success") {
+          addMessage("✅ File uploaded and analyzed successfully!");
+          addMessage(data.result);
+        } else {
+          addMessage("❌ Error: " + data.error);
+        }
+      } catch (error) {
+        addMessage("Error: " + error);
+      }
+    });
+
+    // === Run selected operation ===
+    runBtn.addEventListener("click", async () => {
+      const selectedAction = actionSelect.value;
+      if (!selectedAction) {
+        alert("Please select an action first.");
+        return;
+      }
+
+      addMessage(`Running: ${selectedAction}`, "user");
+
+      try {
+        const response = await fetch("/process", {
+          method: "POST",
+          body: new URLSearchParams({ command: selectedAction }),
+          headers: { "Content-Type": "application/x-www-form-urlencoded" }
+        });
+        const data = await response.json();
+        addMessage(data.result || data.error || "No response from server");
+      } catch (error) {
+        addMessage("Error: " + error);
+      }
+    });
+  </script>
+</body>
+</html>
