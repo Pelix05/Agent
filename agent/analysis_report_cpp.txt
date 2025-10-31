@@ -67,7 +67,7 @@ private slots:
 puzzle-2\generatepuzzlemenuwindow.h:16:9: error: There is an unknown macro here somewhere. Configuration is required. If slots is a macro then please configure it. [unknownMacro]
 private slots:
         ^
-puzzle-2\mainwindowpuzzle.h:60:9: error: There is an unknown macro here somewhere. Configuration is required. If slots is a macro then please configure it. [unknownMacro]
+puzzle-2\mainwindowpuzzle.h:59:9: error: There is an unknown macro here somewhere. Configuration is required. If slots is a macro then please configure it. [unknownMacro]
 private slots:
         ^
 puzzle-2\puzzle\database.cpp:6:5: performance: Variable 'm_db' is assigned in constructor body. Consider performing initialization in initialization list. [useInitializationList]
