@@ -9,12 +9,12 @@ SNIPPET_FILE.parent.mkdir(exist_ok=True)
 
 
 def run_command(cmd, cwd=None):
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd)
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd, timeout=30)
     return result.stdout + result.stderr
 
 
 def analyze_cpp():
-    cpp_repo = BASE_DIR / "cpp_project"
+    cpp_repo = BASE_DIR / "cpp_project" / "puzzle-2"
     print("[*] Running C++ analysis (cppcheck + optional clang-tidy)...")
 
     # cppcheck focus on warnings, performance, portability
@@ -61,6 +61,7 @@ def extract_snippets(report_content):
 
 
 if __name__ == "__main__":
+    print("[*] Starting C++ analysis...")
     report = analyze_cpp()
     REPORT_FILE.write_text(report, encoding="utf-8")
     print(f"[+] C++ analysis saved to {REPORT_FILE}")
