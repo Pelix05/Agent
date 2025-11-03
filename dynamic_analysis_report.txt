@@ -1,0 +1,140 @@
+# Dynamic Analysis Report
+Date: 2025-11-04
+
+== PATCH APPLICATION ==
+patch_1.diff ... FAILED (error: corrupt patch at line 16)
+patch_10.diff ... SUCCESS
+patch_11.diff ... SUCCESS
+patch_12.diff ... SUCCESS
+patch_13.diff ... SUCCESS
+patch_14.diff ... SUCCESS
+patch_15.diff ... SUCCESS
+patch_1_1762189250_1.diff ... FAILED (error: corrupt patch at line 16)
+patch_1_1762189262_2.diff ... FAILED (error: corrupt patch at line 16)
+patch_1_1762189272_3.diff ... FAILED (error: corrupt patch at line 16)
+patch_1_1762190489_1.diff ... FAILED (error: corrupt patch at line 16)
+patch_1_1762190501_2.diff ... FAILED (error: corrupt patch at line 17)
+patch_1_1762190510_3.diff ... FAILED (error: corrupt patch at line 17)
+patch_1_1762192277_1.diff ... FAILED (error: corrupt patch at line 17)
+patch_1_1762192286_2.diff ... FAILED (error: corrupt patch at line 16)
+patch_1_1762192293_3.diff ... FAILED (error: corrupt patch at line 15)
+patch_2.diff ... FAILED (error: corrupt patch at line 18)
+patch_2_1762189296_1.diff ... FAILED (error: corrupt patch at line 16)
+patch_2_1762189304_2.diff ... FAILED (error: corrupt patch at line 17)
+patch_2_1762189312_3.diff ... FAILED (error: corrupt patch at line 15)
+patch_2_1762190536_1.diff ... FAILED (error: corrupt patch at line 15)
+patch_2_1762190544_2.diff ... FAILED (error: corrupt patch at line 15)
+patch_2_1762190552_3.diff ... FAILED (error: corrupt patch at line 17)
+patch_2_1762192324_1.diff ... FAILED (error: corrupt patch at line 18)
+patch_2_1762192334_2.diff ... FAILED (error: corrupt patch at line 17)
+patch_2_1762192343_3.diff ... FAILED (error: corrupt patch at line 15)
+patch_3.diff ... FAILED (error: corrupt patch at line 16)
+patch_3_1762189339_1.diff ... FAILED (error: corrupt patch at line 16)
+patch_3_1762189350_2.diff ... FAILED (error: corrupt patch at line 16)
+patch_3_1762189359_3.diff ... FAILED (error: corrupt patch at line 16)
+patch_3_1762190579_1.diff ... FAILED (error: corrupt patch at line 16)
+patch_3_1762190590_2.diff ... FAILED (error: corrupt patch at line 18)
+patch_3_1762190597_3.diff ... FAILED (error: corrupt patch at line 15)
+patch_3_1762192376_1.diff ... FAILED (error: corrupt patch at line 13)
+patch_3_1762192384_2.diff ... FAILED (error: corrupt patch at line 17)
+patch_3_1762192394_3.diff ... FAILED (error: corrupt patch at line 15)
+patch_4.diff ... SUCCESS
+patch_4_1762189386_1.diff ... SUCCESS
+patch_4_1762189402_3.diff ... FAILED (error: corrupt patch at line 17)
+patch_4_1762190622_1.diff ... FAILED (error: corrupt patch at line 13)
+patch_4_1762190632_2.diff ... FAILED (error: corrupt patch at line 15)
+patch_4_1762190642_3.diff ... FAILED (error: corrupt patch at line 21)
+patch_4_1762192425_1.diff ... FAILED (error: corrupt patch at line 18)
+patch_4_1762192434_2.diff ... FAILED (error: corrupt patch at line 14)
+patch_4_1762192442_3.diff ... FAILED (error: corrupt patch at line 15)
+patch_5.diff ... SUCCESS
+patch_5_1762189428_1.diff ... FAILED (error: corrupt patch at line 15)
+patch_5_1762189437_2.diff ... FAILED (error: corrupt patch at line 19)
+patch_5_1762189448_3.diff ... FAILED (error: corrupt patch at line 18)
+patch_5_1762190668_1.diff ... FAILED (error: corrupt patch at line 16)
+patch_5_1762190678_2.diff ... FAILED (error: corrupt patch at line 19)
+patch_5_1762190688_3.diff ... FAILED (error: corrupt patch at line 15)
+patch_5_1762192473_1.diff ... FAILED (error: corrupt patch at line 15)
+patch_5_1762192481_2.diff ... FAILED (error: corrupt patch at line 14)
+patch_5_1762192490_3.diff ... FAILED (error: corrupt patch at line 17)
+patch_6.diff ... SUCCESS
+patch_7.diff ... SUCCESS
+patch_8.diff ... SUCCESS
+patch_9.diff ... SUCCESS
+
+== TEST EXECUTION ==
+[-] test_puzzle_piece_close_enough ... FAIL
+ Traceback (most recent call last):
+   File "D:\semester5\ai-agent-project\agent\dynamic_tester.py", line 130, in run_py_bug_tests
+     spec.loader.exec_module(mod)
+     ~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+   File "<frozen importlib._bootstrap_external>", line 1026, in exec_module
+   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+   File "d:\semester5\ai-agent-project\python_repo\puzzle-challenge\puzzle_piece.py", line 2, in <module>
+     import prepare
+   File "d:\semester5\ai-agent-project\python_repo\puzzle-challenge\prepare.py", line 19, in <module>
+     GFX = tools.load_all_gfx(os.path.join("resources", "graphics"))
+   File "d:\semester5\ai-agent-project\python_repo\puzzle-challenge\tools.py", line 34, in load_all_gfx
+     for pic in os.listdir(directory):
+                ~~~~~~~~~~^^^^^^^^^^^
+ FileNotFoundError: [WinError 3] The system cannot find the path specified: 'resources\\graphics'
+[-] test_labels_render_text ... FAIL
+ Traceback (most recent call last):
+   File "D:\semester5\ai-agent-project\agent\dynamic_tester.py", line 130, in run_py_bug_tests
+     spec.loader.exec_module(mod)
+     ~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+   File "<frozen importlib._bootstrap_external>", line 1026, in exec_module
+   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+   File "d:\semester5\ai-agent-project\python_repo\puzzle-challenge\labels.py", line 5, in <module>
+     import prepare, tools
+   File "d:\semester5\ai-agent-project\python_repo\puzzle-challenge\prepare.py", line 19, in <module>
+     GFX = tools.load_all_gfx(os.path.join("resources", "graphics"))
+   File "d:\semester5\ai-agent-project\python_repo\puzzle-challenge\tools.py", line 34, in load_all_gfx
+     for pic in os.listdir(directory):
+                ~~~~~~~~~~^^^^^^^^^^^
+ FileNotFoundError: [WinError 3] The system cannot find the path specified: 'resources\\graphics'
+[-] test_puzzle_get_event ... FAIL
+ Traceback (most recent call last):
+   File "D:\semester5\ai-agent-project\agent\dynamic_tester.py", line 130, in run_py_bug_tests
+     spec.loader.exec_module(mod)
+     ~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+   File "<frozen importlib._bootstrap_external>", line 1026, in exec_module
+   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+   File "d:\semester5\ai-agent-project\python_repo\puzzle-challenge\puzzle.py", line 3, in <module>
+     import prepare
+   File "d:\semester5\ai-agent-project\python_repo\puzzle-challenge\prepare.py", line 19, in <module>
+     GFX = tools.load_all_gfx(os.path.join("resources", "graphics"))
+   File "d:\semester5\ai-agent-project\python_repo\puzzle-challenge\tools.py", line 34, in load_all_gfx
+     for pic in os.listdir(directory):
+                ~~~~~~~~~~^^^^^^^^^^^
+ FileNotFoundError: [WinError 3] The system cannot find the path specified: 'resources\\graphics'
+[+] Resource Management ... PASS
+ Read success: Test
+[+] Concurrency ... PASS
+ Task 0 done
+ Task 1 done
+ Task 2 done
+[+] Boundary Test  ... PASS
+ Value  handled
+[+] Boundary Test aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ... PASS
+ Value aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa handled
+[+] Boundary Test -1 ... PASS
+ Value -1 handled
+[+] Boundary Test 0 ... PASS
+ Value 0 handled
+[+] Boundary Test 10000000000.0 ... PASS
+ Value 10000000000.0 handled
+[+] Boundary Test ('int', 'a') ... PASS
+ Caught expected exception: invalid literal for int() with base 10: 'a'
+[+] Boundary Test ('float', 'b') ... PASS
+ Caught expected exception: could not convert string to float: 'b'
+[+] Env Test ... PASS
+ TEST_MODE set to 1
+[+] Dynamic Code Test ... PASS
+ JSON loaded: {'__import__': 'os'}
+
+== SUMMARY ==
+Patches applied: 13/59
+Bugs fixed: 11
+Remaining issues: 3
+New issues: 3

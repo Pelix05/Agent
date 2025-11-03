@@ -1,0 +1,15 @@
+```diff
+diff --git a/puzzle-challenge/puzzle_piece.py b/puzzle-challenge/puzzle_piece.py
+index <hash>..<hash> 137:9,15 +++
+      y_diff = p1.bottom - p2.top
+      x_diff = p1.left - p2.left
++    if not x_diff or not y_diff:
++        print("Coordinates not defined before assigning to x_diff and y_diff")
+---
+    for piece_ in other_section.pieces:
+        piece_.rect.move_ip(x_diff, y_diff)
+        self.pieces.append(piece_)
+        self.grabbed = False
+        return
+```
+Explanation: The patch adds a check to ensure that `x_diff` and `y_diff` are not `None` before assigning them to avoid the `E0606` errors reported. If either is `None`, it prints a message indicating the issue. This change is made in line 139, modifying one line from the original code.
