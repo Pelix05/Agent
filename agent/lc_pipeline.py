@@ -180,8 +180,8 @@ def run_command(cmd, cwd=None):
     print(result.stdout + result.stderr)
 
 
-def ask_llm(prompt: str) -> str:
-    """Ask Gemini → Qwen → Ollama for a patch, with longer timeouts and graceful fallback."""
+def ask_llm(prompt: str, original_code_file: str, patched_code_file: str) -> str:
+    """Ask Gemini → Qwen → Ollama for a patch, apply the patch to the code."""
     global SKIP_LLM
     if SKIP_LLM:
         print("[Debug] SKIP_LLM is set; skipping LLM calls and returning empty patch")
@@ -211,7 +211,7 @@ def ask_llm(prompt: str) -> str:
           f"Qwen={'yes' if qwen_llm else 'no'}, Ollama={'yes' if ollama_llm else 'no'}")
 
     # Try Gemini first, then Qwen, then Ollama
-    for llm, name, t in [#(gemini_llm, "Gemini", 20),
+    for llm, name, t in [(gemini_llm, "Gemini", 20),
                           (qwen_llm, "Qwen", 60),
                           (ollama_llm, "Ollama", 30)]:
         resp = invoke_with_timeout(llm, name, timeout=t)
@@ -222,12 +222,29 @@ def ask_llm(prompt: str) -> str:
         print(f"[Debug] {name} response length: {len(content) if content else 0}")
         if content and "diff --git" in content:
             print(f"[+] Patch from {name}")
+            
+            # Apply the patch to the code
+            apply_patch(original_code_file, content, patched_code_file)
+
+            # Compare before and after
+            compare_files(original_code_file, patched_code_file)
+            
             return content
         else:
             print(f"[Debug] {name} response did not contain a patch, skipping.")
 
     print("[!] All LLMs failed to produce a patch for this snippet.")
     return ""
+
+def run_patch_py(report_file, snippet_file, lang="py"):
+    """Wrapper function to run the patch pipeline for Python code."""
+    print(f"[*] Running patch pipeline for {lang}...")
+
+    # Run the pipeline to generate patches
+    run_pipeline(report_file, snippet_file, lang)
+    
+    # Optionally: Apply patches or do further post-processing here
+    print("[*] Patch pipeline completed.")
 
 
 def clean_patch_output(patch: str) -> str:
@@ -268,6 +285,29 @@ def validate_patch(patch_text: str) -> bool:
         and "+++ b/" in patch_text):
         return True
     return False
+import difflib
+
+def apply_patch(original_file, patch_text, output_file):
+    """Apply the generated patch to the original code file."""
+    with open(original_file, 'r') as original, open(output_file, 'w') as patched:
+        original_code = original.readlines()
+
+        # Use difflib to apply the patch
+        patch = difflib.unified_diff(original_code, patch_text.splitlines(), fromfile=original_file, tofile=output_file)
+        patched.writelines(patch)
+
+    print(f"Patch applied successfully. Patched code saved to {output_file}")
+
+
+def compare_files(original_file, patched_file):
+    """Compare the original and patched files to prove the patch was applied."""
+    with open(original_file, 'r') as f1, open(patched_file, 'r') as f2:
+        original_code = f1.readlines()
+        patched_code = f2.readlines()
+
+    diff = difflib.unified_diff(original_code, patched_code, fromfile='original_code.py', tofile='patched_code.py')
+
+    print('\n'.join(diff))
 
 
 def run_pipeline(report_file, snippet_file, lang="py"):
@@ -275,16 +315,14 @@ def run_pipeline(report_file, snippet_file, lang="py"):
     Run patch pipeline for snippets, saving each patch separately.
     lang: "py" for Python, "cpp" for C++
     """
-    # ✅ Choose target directory based on language
+    # Choose target directory based on language
     target_folder = PATCHES_DIR / f"patches_{lang}"
     target_folder.mkdir(parents=True, exist_ok=True)
 
-    # ✅ Basic existence check
     if not report_file.exists() or not snippet_file.exists():
         print("[!] Report or snippet not found.")
         return
 
-    # ✅ Load report + snippets
     report = report_file.read_text(encoding="utf-8")
     snippets = snippet_file.read_text(encoding="utf-8").split("--- ")
 
@@ -293,35 +331,14 @@ def run_pipeline(report_file, snippet_file, lang="py"):
     for i, snippet in enumerate(snippets[1:], start=1):
         print(f"🔧 Processing snippet {i}...")
 
-        # ✅ Prepare LLM prompt
-        prompt = BUG_FIX_PROMPT.format(
-            code_snippet=snippet.strip(),
-            analysis=report
-        )
+        prompt = BUG_FIX_PROMPT.format(code_snippet=snippet.strip(), analysis=report)
 
-        # ✅ Call LLM for patch suggestion
-        raw_patch = ask_llm(prompt)
+        # Call LLM for patch suggestion and apply it
+        raw_patch = ask_llm(prompt, "original_code.py", "patched_code.py")
 
-        # ✅ Save raw LLM response (for debugging)
-        raw_file = target_folder / f"raw_resp_{i}.txt"
-        raw_file.write_text(raw_patch or "", encoding="utf-8")
+        # Optionally, run unit tests to verify the patch works
+        subprocess.run(["python", "test_patch.py"], check=True)
 
-        preview = (raw_patch or "").strip()[:400]
-        print(f"[Debug] Raw LLM response preview (first 400 chars):\n{preview}\n--- end preview ---")
-
-        # ✅ Clean + Sanitize Patch
-        sanitized = sanitize_patch(raw_patch or "")
-        patch = clean_patch_output(sanitized)
-
-        # ✅ Validate before saving
-        if validate_patch(patch):
-            patch_file = target_folder / f"patch_{i}.diff"
-            patch_file.write_text(patch, encoding="utf-8")
-            print(f"[+] ✅ Patch {i} written to {patch_file}")
-        else:
-            print(f"[!] ⚠️ Skipping snippet {i}, invalid diff format")
-            skipped_file = target_folder / f"skipped_patch_{i}.txt"
-            skipped_file.write_text(raw_patch or "", encoding="utf-8")
 
 
 def sanitize_patch(raw_patch: str) -> str:

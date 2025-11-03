@@ -21,6 +21,7 @@ PUZZLE_CHALLENGE = PY_REPO / "puzzle-challenge"
 sys.path.insert(0, str(PUZZLE_CHALLENGE))
 
 # === Helper Functions ===
+
 def run_command(cmd, cwd=None, input_text=None):
     """Run shell command with optional stdin and return success + output."""
     try:
@@ -43,7 +44,6 @@ def apply_patches_from_dir(target_repo, patch_dir):
     patch_files = sorted(patch_dir.glob("patch_*.diff"))
     if not patch_files:
         return results
-
     for patch_file in patch_files:
         name = patch_file.name
         try:
@@ -51,7 +51,6 @@ def apply_patches_from_dir(target_repo, patch_dir):
         except Exception as e:
             results.append({"name": name, "status": "FAILED", "detail": f"read error: {e}"})
             continue
-
         success, output = run_command(["git", "apply", "-"], cwd=target_repo, input_text=patch_text)
         if success:
             results.append({"name": name, "status": "SUCCESS", "detail": ""})
@@ -76,26 +75,21 @@ def run_cpp_tests():
     """Compile and run C++ files, return structured test results."""
     cpp_files = list(CPP_REPO.rglob("*.cpp"))
     results = []
-
     if not cpp_files:
         results.append({"test": "C++ compile/run", "status": "FAIL", "detail": "No C++ files found"})
         return results
-
     exe_name = "main.exe" if os.name == "nt" else "main"
     compile_cmd = f"g++ -std=c++17 -Wall -Wextra -fsanitize=address -o {exe_name} " + " ".join(str(f) for f in cpp_files)
     success, output = run_command(compile_cmd, cwd=CPP_REPO)
-
     if not success:
         results.append({"test": "C++ compile", "status": "FAIL", "detail": output})
         return results
-
     run_cmd = exe_name if os.name == "nt" else f"./{exe_name}"
     success, output = run_command(run_cmd, cwd=CPP_REPO)
     if not success:
         results.append({"test": "C++ runtime", "status": "FAIL", "detail": output})
     else:
         results.append({"test": "C++ runtime", "status": "PASS", "detail": output})
-
     return results
 
 # === MOCK RESOURCES ===
@@ -114,7 +108,6 @@ def run_py_bug_tests():
     ]
     results = []
     ensure_mock_resources()
-
     for module_name, func_name in bug_snippets:
         test_name = f"test_{module_name}_{func_name}"
         try:
@@ -123,7 +116,6 @@ def run_py_bug_tests():
             mod = importlib.util.module_from_spec(spec)
             sys.modules[module_name] = mod
             spec.loader.exec_module(mod)
-
             func = getattr(mod, func_name, None)
             if callable(func):
                 if func_name == "close_enough":
@@ -153,7 +145,6 @@ def run_full_regression_tests():
     """Run pytest across the repo to detect new regressions."""
     if not (PY_REPO / "tests").exists():
         return []
-
     success, output = run_command("pytest -q --tb=short", cwd=PY_REPO)
     results = []
     if success:
@@ -181,7 +172,6 @@ def run_concurrency_tests():
     def task(idx, output):
         time.sleep(0.1)
         output.append(f"Task {idx} done")
-
     threads = []
     output = []
     for i in range(3):
@@ -196,7 +186,6 @@ def run_concurrency_tests():
 def run_boundary_tests():
     results = []
     test_values = ["", "a"*500, -1, 0, 1e10, ("int", "a"), ("float", "b")]
-
     for val in test_values:
         test_name = f"Boundary Test {val}"
         try:
@@ -207,13 +196,15 @@ def run_boundary_tests():
                     result = 10 + int(s)  # will fail if s not numeric
                 elif typ == "float":
                     result = 3.5 + float(s)
+                else:
+                    result = val + 0  # just a dummy operation
             else:
-                result = val + 0  # just a dummy operation
+                result = val + 0
             results.append({"test": test_name, "status": "PASS", "detail": f"Value {val} handled"})
         except Exception as e:
             results.append({"test": test_name, "status": "FAIL", "detail": str(e)})
-
     return results
+
 def run_boundary_exception_tests():
     results = []
     test_values = ["", "a"*500, -1, 0, 1e10, ("int","a"), ("float","b")]
@@ -226,8 +217,8 @@ def run_boundary_exception_tests():
                     result = 10 + int(s)  # convert string safely
                 elif typ == "float":
                     result = 3.5 + float(s)
-            else:
-                result = val + 0  # only safe for numbers
+                else:
+                    result = val + 0  # only safe for numbers
             results.append({"test": test_name, "status": "PASS", "detail": f"Value {val} handled"})
         except Exception as e:
             results.append({"test": test_name, "status": "PASS", "detail": f"Caught expected exception: {e}"})
@@ -271,12 +262,13 @@ def main():
     elif args.py:
         patch_results = apply_patches_from_dir(PY_REPO, patches_py)
         test_results = run_py_bug_tests()
-        test_results += run_full_regression_tests()
-        test_results += run_resource_management_tests()
-        test_results += run_concurrency_tests()
-        test_results += run_boundary_exception_tests()
-        test_results += run_environment_dependency_tests()
-        test_results += run_dynamic_code_execution_tests()
+
+    test_results += run_full_regression_tests()
+    test_results += run_resource_management_tests()
+    test_results += run_concurrency_tests()
+    test_results += run_boundary_exception_tests()
+    test_results += run_environment_dependency_tests()
+    test_results += run_dynamic_code_execution_tests()
 
     # --- Build Report ---
     lines = []
@@ -289,7 +281,6 @@ def main():
             lines.append(f"{p['name']} ... SUCCESS")
         else:
             lines.append(f"{p['name']} ... FAILED ({p['detail']})")
-
     lines.append("")
     lines.append("== TEST EXECUTION ==")
     for t in test_results:
@@ -297,9 +288,9 @@ def main():
             lines.append(f"[+] {t['test']} ... PASS")
         else:
             lines.append(f"[-] {t['test']} ... FAIL")
-            for dl in str(t['detail']).splitlines():
-                lines.append(f"    {dl}")
-
+        for dl in str(t['detail']).splitlines():
+            lines.append(f" {dl}")
+    
     total_patches = len(patch_results)
     applied = sum(1 for p in patch_results if p["status"] == "SUCCESS")
     total_tests = len(test_results)
@@ -316,6 +307,7 @@ def main():
 
     final_report = "\n".join(lines)
     REPORT_FILE.write_text(final_report, encoding="utf-8")
+
     print(final_report)
     print(f"\n[+] Report saved to {REPORT_FILE}")
 
