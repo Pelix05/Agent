@@ -9,7 +9,7 @@ SNIPPET_FILE.parent.mkdir(exist_ok=True)
 
 
 def run_command(cmd, cwd=None):
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd, timeout=30)
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=cwd)
     return result.stdout + result.stderr
 
 
@@ -19,9 +19,10 @@ def analyze_cpp():
 
     # cppcheck focus on warnings, performance, portability
     output1 = run_command(
-        "cppcheck --enable=warning,performance,portability --inconclusive --quiet --force . 2>&1",
-        cwd=cpp_repo,
+    "cppcheck -i debug -i release -i build --enable=warning,performance,portability --inconclusive --quiet --force . 2>&1",
+    cwd=cpp_repo,
     )
+
 
     # clang-tidy (optional, if compile_commands.json exists)
     tidy_file = cpp_repo / "compile_commands.json"

@@ -1,27 +1,10 @@
 # Dynamic Analysis Report
-Date: 2025-10-26
+Date: 2025-11-03
 
 == PATCH APPLICATION ==
-patch_1.diff ... SUCCESS
-patch_10.diff ... SUCCESS
-patch_11.diff ... SUCCESS
-patch_12.diff ... SUCCESS
-patch_13.diff ... SUCCESS
-patch_14.diff ... SUCCESS
-patch_15.diff ... SUCCESS
-patch_2.diff ... SUCCESS
-patch_3.diff ... SUCCESS
-patch_4.diff ... SUCCESS
-patch_5.diff ... SUCCESS
-patch_6.diff ... SUCCESS
-patch_7.diff ... SUCCESS
-patch_8.diff ... SUCCESS
-patch_9.diff ... SUCCESS
 
 == TEST EXECUTION ==
-[+] test_puzzle_piece_close_enough ... PASS
-[+] test_labels_render_text ... PASS
-[+] test_puzzle_get_event ... PASS
+[+] C++ runtime ... PASS
 [+] Resource Management ... PASS
 [+] Concurrency ... PASS
 [+] Boundary Test  ... PASS
@@ -35,7 +18,7 @@ patch_9.diff ... SUCCESS
 [+] Dynamic Code Test ... PASS
 
 == SUMMARY ==
-Patches applied: 15/15
-Bugs fixed: 14
+Patches applied: 0/0
+Bugs fixed: 12
 Remaining issues: 0
 New issues: 0
