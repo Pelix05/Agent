@@ -45,6 +45,7 @@ PUZZLE_CHALLENGE = PY_REPO / "puzzle-challenge"
 #print(f"[DEBUG] Added puzzle-challenge to sys.path: {PUZZLE_CHALLENGE}")
 
 # === Helper Functions ===
+
 def run_command(cmd, cwd=None, input_text=None):
     """Run shell command with optional stdin and return success + output."""
     import subprocess
@@ -94,7 +95,6 @@ def apply_patches_from_dir(target_repo, patch_dir):
     if not patch_files:
         print(f"[DEBUG] No patch files found in {patch_dir}")
         return results
-
     for patch_file in patch_files:
         name = patch_file.name
         try:
@@ -104,7 +104,6 @@ def apply_patches_from_dir(target_repo, patch_dir):
             print(f"[DEBUG] Error reading patch file {patch_file}: {e}")
             results.append({"name": name, "status": "FAILED", "detail": f"read error: {e}"})
             continue
-
         success, output = run_command(["git", "apply", "-"], cwd=target_repo, input_text=patch_text)
         if success:
             print(f"[DEBUG] Patch {name} applied successfully")
@@ -319,7 +318,6 @@ def run_py_bug_tests():
     ]
     results = []
     ensure_mock_resources()
-
     for module_name, func_name in bug_snippets:
         test_name = f"test_{module_name}_{func_name}"
         print(f"[DEBUG] Processing test: {test_name}")
@@ -373,7 +371,6 @@ def run_full_regression_tests():
     if not (PY_REPO / "tests").exists():
         print(f"[DEBUG] Tests directory not found at {PY_REPO / 'tests'}")
         return []
-
     success, output = run_command("pytest -q --tb=short", cwd=PY_REPO)
     if success:
         print(f"[DEBUG] Pytest passed: {output}")
@@ -402,7 +399,6 @@ def run_concurrency_tests():
     def task(idx, output):
         time.sleep(0.1)
         output.append(f"Task {idx} done")
-
     threads = []
     output = []
     for i in range(3):
@@ -417,7 +413,6 @@ def run_concurrency_tests():
 def run_boundary_tests():
     results = []
     test_values = ["", "a"*500, -1, 0, 1e10, ("int", "a"), ("float", "b")]
-
     for val in test_values:
         test_name = f"Boundary Test {val}"
         try:
@@ -428,13 +423,15 @@ def run_boundary_tests():
                     result = 10 + int(s)  # will fail if s not numeric
                 elif typ == "float":
                     result = 3.5 + float(s)
+                else:
+                    result = val + 0  # just a dummy operation
             else:
-                result = val + 0  # just a dummy operation
+                result = val + 0
             results.append({"test": test_name, "status": "PASS", "detail": f"Value {val} handled"})
         except Exception as e:
             results.append({"test": test_name, "status": "FAIL", "detail": str(e)})
-
     return results
+
 def run_boundary_exception_tests():
     results = []
     test_values = ["", "a"*500, -1, 0, 1e10, ("int","a"), ("float","b")]
@@ -447,8 +444,8 @@ def run_boundary_exception_tests():
                     result = 10 + int(s)  # convert string safely
                 elif typ == "float":
                     result = 3.5 + float(s)
-            else:
-                result = val + 0  # only safe for numbers
+                else:
+                    result = val + 0  # only safe for numbers
             results.append({"test": test_name, "status": "PASS", "detail": f"Value {val} handled"})
         except Exception as e:
             results.append({"test": test_name, "status": "PASS", "detail": f"Caught expected exception: {e}"})
@@ -505,12 +502,13 @@ def main():
         patch_results = apply_patches_from_dir(PY_REPO, patches_py)
 
         test_results = run_py_bug_tests()
-        test_results += run_full_regression_tests()
-        test_results += run_resource_management_tests()
-        test_results += run_concurrency_tests()
-        test_results += run_boundary_exception_tests()
-        test_results += run_environment_dependency_tests()
-        test_results += run_dynamic_code_execution_tests()
+
+    test_results += run_full_regression_tests()
+    test_results += run_resource_management_tests()
+    test_results += run_concurrency_tests()
+    test_results += run_boundary_exception_tests()
+    test_results += run_environment_dependency_tests()
+    test_results += run_dynamic_code_execution_tests()
 
     # --- Build Report ---
     print("[DEBUG] Building dynamic analysis report")

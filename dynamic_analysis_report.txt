@@ -1,12 +1,41 @@
 # Dynamic Analysis Report
-Date: 2025-10-31
+Date: 2025-10-26
 
 == PATCH APPLICATION ==
+patch_1.diff ... SUCCESS
+patch_10.diff ... SUCCESS
+patch_11.diff ... SUCCESS
+patch_12.diff ... SUCCESS
+patch_13.diff ... SUCCESS
+patch_14.diff ... SUCCESS
+patch_15.diff ... SUCCESS
+patch_2.diff ... SUCCESS
+patch_3.diff ... SUCCESS
+patch_4.diff ... SUCCESS
+patch_5.diff ... SUCCESS
+patch_6.diff ... SUCCESS
+patch_7.diff ... SUCCESS
+patch_8.diff ... SUCCESS
+patch_9.diff ... SUCCESS
 
 == TEST EXECUTION ==
+[+] test_puzzle_piece_close_enough ... PASS
+[+] test_labels_render_text ... PASS
+[+] test_puzzle_get_event ... PASS
+[+] Resource Management ... PASS
+[+] Concurrency ... PASS
+[+] Boundary Test  ... PASS
+[+] Boundary Test aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ... PASS
+[+] Boundary Test -1 ... PASS
+[+] Boundary Test 0 ... PASS
+[+] Boundary Test 10000000000.0 ... PASS
+[+] Boundary Test ('int', 'a') ... PASS
+[+] Boundary Test ('float', 'b') ... PASS
+[+] Env Test ... PASS
+[+] Dynamic Code Test ... PASS
 
 == SUMMARY ==
-Patches applied: 0/0
-Bugs fixed: 0
+Patches applied: 15/15
+Bugs fixed: 14
 Remaining issues: 0
 New issues: 0

@@ -202,12 +202,12 @@ def run_command(cmd, cwd=None):
             print(result.stdout)
         if result.stderr:
             print(result.stderr)
-    except Exception as e:
+    except Exception as e:branch
         print(f"[!] Command execution failed: {e}", file=sys.stderr)
         print(f"[DEBUG] Exception details: {traceback.format_exc()}", file=sys.stderr)
 
-def ask_llm(prompt: str) -> str:
-    """Ask Gemini → Qwen → Ollama for a patch, with longer timeouts and graceful fallback."""
+def ask_llm(prompt: str, original_code_file: str, patched_code_file: str) -> str:
+    """Ask Gemini → Qwen → Ollama for a patch, apply the patch to the code."""
     global SKIP_LLM
     if SKIP_LLM:
         print("[Debug] SKIP_LLM is set; skipping LLM calls and returning empty patch")
@@ -238,7 +238,9 @@ def ask_llm(prompt: str) -> str:
           f"Qwen={'yes' if qwen_llm else 'no'}, Ollama={'yes' if ollama_llm else 'no'}")
 
     # Try Gemini first, then Qwen, then Ollama
-    for llm, name, t in [(qwen_llm, "Qwen", 60), (ollama_llm, "Ollama", 30)]:
+    for llm, name, t in [(gemini_llm, "Gemini", 20),
+                          (qwen_llm, "Qwen", 60),
+                          (ollama_llm, "Ollama", 30)]:
         resp = invoke_with_timeout(llm, name, timeout=t)
         if resp is None:
             print(f"[Debug] {name} returned no response, moving to next LLM...")
@@ -248,12 +250,30 @@ def ask_llm(prompt: str) -> str:
         if content and "diff --git" in content:
             print(f"[+] Patch from {name}")
             print(f"[DEBUG] Patch content: {content}")
+            
+            # Apply the patch to the code
+            apply_patch(original_code_file, content, patched_code_file)
+
+            # Compare before and after
+            compare_files(original_code_file, patched_code_file)
+            
+            print(f"[DEBUG] Patch content: {content}")
             return content
         else:
             print(f"[Debug] {name} response did not contain a patch, skipping.")
 
     print("[!] All LLMs failed to produce a patch for this snippet.")
     return ""
+
+def run_patch_py(report_file, snippet_file, lang="py"):
+    """Wrapper function to run the patch pipeline for Python code."""
+    print(f"[*] Running patch pipeline for {lang}...")
+
+    # Run the pipeline to generate patches
+    run_pipeline(report_file, snippet_file, lang)
+    
+    # Optionally: Apply patches or do further post-processing here
+    print("[*] Patch pipeline completed.")
 
 def clean_patch_output(patch: str) -> str:
     """Clean LLM output to a valid unified diff patch."""
@@ -302,6 +322,29 @@ def validate_patch(patch_text: str) -> bool:
         return True
     print(f"[DEBUG] Patch is invalid")
     return False
+import difflib
+
+def apply_patch(original_file, patch_text, output_file):
+    """Apply the generated patch to the original code file."""
+    with open(original_file, 'r') as original, open(output_file, 'w') as patched:
+        original_code = original.readlines()
+
+        # Use difflib to apply the patch
+        patch = difflib.unified_diff(original_code, patch_text.splitlines(), fromfile=original_file, tofile=output_file)
+        patched.writelines(patch)
+
+    print(f"Patch applied successfully. Patched code saved to {output_file}")
+
+
+def compare_files(original_file, patched_file):
+    """Compare the original and patched files to prove the patch was applied."""
+    with open(original_file, 'r') as f1, open(patched_file, 'r') as f2:
+        original_code = f1.readlines()
+        patched_code = f2.readlines()
+
+    diff = difflib.unified_diff(original_code, patched_code, fromfile='original_code.py', tofile='patched_code.py')
+
+    print('\n'.join(diff))
 
 def run_pipeline(report_file, snippet_file, lang="py"):
     """
@@ -314,14 +357,12 @@ def run_pipeline(report_file, snippet_file, lang="py"):
     target_folder.mkdir(parents=True, exist_ok=True)
     print(f"[DEBUG] Target folder: {target_folder}")
 
-    # ✅ Basic existence check
     if not report_file.exists() or not snippet_file.exists():
         print(f"[!] Report or snippet not found.")
         print(f"[DEBUG] Report file exists: {report_file.exists()}")
         print(f"[DEBUG] Snippet file exists: {snippet_file.exists()}")
         return
 
-    # ✅ Load report + snippets
     report = report_file.read_text(encoding="utf-8")
     snippets = snippet_file.read_text(encoding="utf-8").split("--- ")
     print(f"[DEBUG] Loaded {len(snippets) - 1} snippets from {snippet_file}")
@@ -339,33 +380,13 @@ def run_pipeline(report_file, snippet_file, lang="py"):
         )
         print(f"[DEBUG] Prepared prompt: {prompt[:400]}...")  # Preview first 400 characters
 
-        # ✅ Call LLM for patch suggestion
-        raw_patch = ask_llm(prompt)
-        print(f"[DEBUG] Raw patch received: {raw_patch[:400]}...")  # Preview first 400 characters
+        # Call LLM for patch suggestion and apply it
+        raw_patch = ask_llm(prompt, "original_code.py", "patched_code.py")
 
-        # ✅ Save raw LLM response (for debugging)
-        raw_file = target_folder / f"raw_resp_{i}.txt"
-        raw_file.write_text(raw_patch or "", encoding="utf-8")
-        print(f"[DEBUG] Raw response saved to {raw_file}")
+        # Optionally, run unit tests to verify the patch works
+        subprocess.run(["python", "test_patch.py"], check=True)
 
-        preview = (raw_patch or "").strip()[:400]
-        print(f"[Debug] Raw LLM response preview (first 400 chars):\n{preview}\n--- end preview ---")
 
-        # ✅ Clean + Sanitize Patch
-        sanitized = sanitize_patch(raw_patch or "")
-        patch = clean_patch_output(sanitized)
-        print(f"[DEBUG] Sanitized patch: {patch[:400]}...")  # Preview first 400 characters
-
-        # ✅ Validate before saving
-        if validate_patch(patch):
-            patch_file = target_folder / f"patch_{i}.diff"
-            patch_file.write_text(patch, encoding="utf-8")
-            print(f"[+] ✅ Patch {i} written to {patch_file}")
-        else:
-            print(f"[!] ⚠️ Skipping snippet {i}, invalid diff format")
-            skipped_file = target_folder / f"skipped_patch_{i}.txt"
-            skipped_file.write_text(raw_patch or "", encoding="utf-8")
-            print(f"[DEBUG] Skipped patch saved to {skipped_file}")
 
 def sanitize_patch(raw_patch: str) -> str:
     """
