@@ -9,3 +9,6 @@ __pycache__/
 agent/analysis_report_*.txt
 agent/snippets/
 agent/patches/
+
+# Ignore zip archives
+*.zip
